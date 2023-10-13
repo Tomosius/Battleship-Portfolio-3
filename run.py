@@ -1249,3 +1249,48 @@ def select_best_shot_based_on_alignment(map_to_search):
     return None, None
 
 
+
+def cpu_move():
+    """
+    Executes the CPU's move during the game.
+
+    Global Variables:
+    - game_result: Holds the current state of the game ("Game Over" or None).
+    - fleet_cpu: Dictionary holding information about the CPU's fleet.
+    - map_cpu_hidden: Hidden map for the CPU.
+    - map_cpu_display: Display map for the CPU.
+    - cpu_shot_log_tmp: Temporary log for the CPU's shots.
+    - game_actions_log: Log for game actions.
+    - start_time: Time when the game started.
+    - SHIP_SYMBOLS: Dictionary holding symbols for different ship states.
+
+    Returns:
+    - None: Updates global variables as side effects.
+    """
+
+    # Declare global variables accessed within the function
+    global game_result, fleet_cpu, map_cpu_hidden, map_cpu_display
+    global cpu_shot_log_tmp, game_actions_log, start_time, SHIP_SYMBOLS
+
+    # Identify the player as CPU for logging and action purposes
+    player = "CPU"
+
+    # Check if there are any damaged but unsunk ships in cpu_shot_log_tmp
+    if len(cpu_shot_log_tmp) == 0:
+        print("No damaged ships in CPU's temporary log.")
+        # If no damaged ships are found, choose coordinates based on the largest ship in the fleet
+        row, column = cpu_choose_shooting_coordinates_biggest_ship(fleet_cpu, map_cpu_hidden)
+        # Perform the shooting action and update the game state
+        action_perform_shoot(player, row, column, map_cpu_hidden, map_cpu_display, fleet_cpu)
+
+        # Check for game over condition
+    else:
+        print(f"Damaged ships found in CPU's temporary log: {cpu_shot_log_tmp}")
+        # If damaged ships are found, focus on sinking them by selecting the best shot based on ship alignment
+        row, column = select_best_shot_based_on_alignment(map_cpu_hidden)
+        # Perform the shooting action and update the game state
+        action_perform_shoot(player, row, column, map_cpu_hidden, map_cpu_display, fleet_cpu)
+
+
+
+
