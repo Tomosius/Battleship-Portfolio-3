@@ -1054,7 +1054,6 @@ def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
     - coordinates_list_set_id (int): The index of the set of coordinates to remove
     """
     # Initial logging to display the current state of the fleet
-    print("3463rr3r   4now we will be removing fleet[ship_name][Coordinates][coordinates_list_set_id]", ship_name,
           coordinates_list_set_id)
     print_fleet(fleet)
 
