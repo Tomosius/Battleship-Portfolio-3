@@ -243,7 +243,7 @@ def print_map(game_map):
     for col_index in range(len(game_map[0])):
         print(f"{col_index}  ", end="")
 
-    # Print a separator line
+    # Print a separator line between headers and table
     print("\n   " + "=" * (len(game_map[0]) * 3))
 
     # Loop through each row
