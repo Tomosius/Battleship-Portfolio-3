@@ -1043,3 +1043,73 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coor
         game_result = "Game Over"
 
 
+def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
+    """
+    Removes an entire set of coordinates from a ship and updates its quantity.
+    Also removes any empty coordinate sets in the list.
+
+    Parameters:
+    - fleet (dict): The fleet information
+    - ship_name (str): The name of the ship to update
+    - coordinates_list_set_id (int): The index of the set of coordinates to remove
+    """
+    # Initial logging to display the current state of the fleet
+    print("3463rr3r   4now we will be removing fleet[ship_name][Coordinates][coordinates_list_set_id]", ship_name,
+          coordinates_list_set_id)
+    print_fleet(fleet)
+
+    try:
+        # Additional logging for debugging
+        print()
+        print_fleet(fleet)
+        print("now we will be removing fleet[ship_name][Coordinates][coordinates_list_set_id]", ship_name, coordinates_list_set_id)
+
+        # Remove the entire set of coordinates from the ship
+        del fleet[ship_name]["Coordinates"][coordinates_list_set_id]
+
+        # Remove any empty coordinate sets from the ship's list of coordinates
+        fleet[ship_name]["Coordinates"] = [coords for coords in fleet[ship_name]["Coordinates"] if coords]
+
+        # Reduce the quantity of this type of ship by 1
+        fleet[ship_name]["Quantity"] -= 1
+
+        # If the quantity of this type of ship reaches zero, remove it from the fleet
+        if fleet[ship_name]["Quantity"] <= 0:
+            del fleet[ship_name]
+
+        # Final logging to display the updated state of the fleet
+        print_fleet(fleet)
+
+    except KeyError:
+        # Handle cases where the specified ship name does not exist in the fleet
+        print(f"Failed to remove coordinates for {ship_name}.")
+
+
+def update_cpu_shot_log(coordinates_list):
+    """
+    Update the CPU shot log by removing coordinates that are present in
+    the provided coordinates_list, implying that a ship has been sunk.
+
+    Parameters:
+    - coordinates_list (list): A list of coordinates that are to be removed.
+
+    Returns:
+    - list: Updated CPU shot log.
+    """
+
+    # Declare global variable to access and modify CPU shot log
+    global cpu_shot_log_tmp
+
+    # Exception handling to gracefully manage any runtime errors
+    try:
+        # Loop through each coordinate pair in coordinates_list
+        for coord in coordinates_list:
+            # Remove the coordinate pair from cpu_shot_log_tmp if it exists
+            # If the coordinate pair doesn't exist, a ValueError will be raised
+            cpu_shot_log_tmp.remove(coord)
+    except ValueError as e:
+        # Handle the case where a coordinate pair is not found in the log
+        print(f"Coordinate not found in log: {e}")
+
+    # Return the updated CPU shot log
+    return cpu_shot_log_tmp
