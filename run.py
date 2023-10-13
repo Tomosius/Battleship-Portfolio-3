@@ -5,7 +5,6 @@ import random  # For generating random numbers
 import copy  # For creating deep copies of data structures
 import os  # For clearing the terminal screen
 import time  # For time-related functionalities
-from typing import List, Tuple  # For type hinting
 
 
 # Constants for map dimensions and default symbol
@@ -172,5 +171,25 @@ wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
     # Step 4: Clear the terminal again
     clear_terminal()
 
+
+# Initial game start functions
+#-----------------------------
+
+# Main Functions
+# --------------
+
+def create_map(width, height, symbol):
+    """
+    Initialize a 2D map with a default symbol.
+
+    Args:
+        width (int): The width of the map.
+        height (int): The height of the map.
+        symbol (str): The default symbol to fill the map with.
+
+    Returns:
+        List[List[str]]: A 2D list initialized with the default symbol.
+    """
+    return [[symbol for _ in range(height)] for _ in range(width)]
 
 
