@@ -397,3 +397,105 @@ def print_map_and_list(map_left, instructions, label_left, gap=10):
             print(instructions[row_index])
         else:
             print()
+
+# Map manipulating functions
+#---------------------------
+
+
+def create_coordinate_list(row, column,alignment,ship_size):
+    coordinates_list = []
+    if ship_size == 1:
+        coordinates_list.append(coordinates)
+    else:
+        if alignment == "Horizontal" or alignment == "HorizontalSunk":
+            for cell in range(ship_size):
+                coordinates_list.append([row, column + cell])
+        if alignment == "Vertical" or alignment == "VerticalSunk":
+            for cell in range(ship_size):
+                coordinates_list.append([row + cell, column])
+    return  coordinates_list
+
+
+def map_allocate_empty_space_for_ship(game_map, coordinates_list):
+    """
+    Creating empty space around ship, so ships can not be touching each other. So function will create pattern of Miss symbols, so when deploying ships, they can not be touching. when deployment of all ships is completed, these symbols will be changed back to DEFAULT_SYMBOL
+
+    Args:
+        game_map (list): The 2D map where the ship will be deployed.
+        ship_size (int): The length of the ship.
+        coordinates (list): Starting coordinates [row, column] for the ship.
+        alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
+
+    Global Variables:
+        SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
+
+    Returns:
+        None
+
+    """
+
+    # Use the global variable SHIP_SYMBOLS to get the ship symbols
+    global SHIP_SYMBOLS
+
+    blank_space = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,0],[0,1],[1,-1],[1,0],[1,1]]
+
+
+    #creating big pattern of default symbols
+    blank_space_coordinates_list = []
+    for space in blank_space:
+        blank_row, blank_column = space
+        for coordinate in  coordinates_list:
+            new_row, new_column = coordinate
+            new_blank_row, new_blank_column = blank_row + new_row, blank_column + new_column
+            blank_space_coordinates_list.append([new_blank_row, new_blank_column])
+
+    # now applying all spaces to map
+    for new_space in blank_space_coordinates_list:
+        b_row, b_column = new_space
+        if 0 <= b_row < len(game_map) and 0 <= b_column < len(game_map[0]):
+            game_map[b_row][b_column] = SHIP_SYMBOLS["Miss"][0]
+
+
+def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
+    """
+    Deploy a single ship on the map.
+
+    Args:
+        game_map (list): The 2D map where the ship will be deployed.
+        length (int): The length of the ship.
+        coordinates (list): Starting coordinates [row, column] for the ship.
+        alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
+        ship_name (str): The name of the ship.
+        fleet (dict): Dictionary containing fleet information.
+
+    Global Variables:
+        SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
+
+    Returns:
+        list: Nested list of .ship coordinates
+    """
+    # Use the global variable SHIP_SYMBOLS to get the ship symbols
+    global SHIP_SYMBOLS
+
+    # Use the global variable GAPS_BETWEEN_MAPS to get Trye or False for ships NOT touching
+    global DEFAULT_GAPS_BETWEEN_MAPS
+
+    # Before we start displaying ships on map, if spaces between ships is True, we will allocate blank space, then depliy ships
+    if DEFAULT_GAPS_BETWEEN_MAPS == True:
+        map_allocate_empty_space_for_ship(game_map, coordinates_list)
+
+
+    # Handle the case for single-cell ships
+    if len(coordinates_list) == 1:
+        row, column = coordinates_list[0]
+        game_map[row][column] = SHIP_SYMBOLS[alignment][0]
+
+    # Handle the case for multi-cell ships
+    else:
+        row, column = coordinates_list[0]
+        game_map[row][column] = SHIP_SYMBOLS[alignment][0]
+        for cell in range(1,len(coordinates_list)):
+            row, column = coordinates_list[cell]
+            game_map[row][column] = SHIP_SYMBOLS[alignment][1]
+
+
