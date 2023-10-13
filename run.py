@@ -1159,4 +1159,93 @@ def find_first_ship_alignment(log):
     return ('None', None)
 
 
+def select_best_shot_based_on_alignment(map_to_search):
+    """
+    Chooses the best coordinates to shoot at based on ship alignment detection.
+
+    Args:
+        map_to_search (list of lists): The map to search for ship coordinates.
+
+    Global Variables:
+        cpu_shot_log_tmp (list of lists): Temporary log of CPU shots.
+        DEFAULT_SYMBOL (str): The default symbol representing untargeted cells in the map.
+
+    Returns:
+        tuple: The chosen column and row coordinates to target next based on the identified ship alignment.
+               Returns (None, None) if no suitable coordinates are found.
+    """
+    # Access global variables
+    global cpu_shot_log_tmp, DEFAULT_SYMBOL
+
+    # Get the alignment and last index from the CPU shot log
+    alignment_info = find_first_ship_alignment(cpu_shot_log_tmp)
+
+    # Return None if no identifiable ship alignment is found
+    if alignment_info is None or alignment_info[0] == 'None':
+        return None, None
+
+    # Unpack alignment and last index
+    alignment, last_index = alignment_info
+
+    # Get the last shot coordinates
+    last_row, last_column = cpu_shot_log_tmp[last_index]
+
+    # Define the boundaries of the map
+    max_row = len(map_to_search) - 1
+    max_column = len(map_to_search[0]) - 1
+
+    # Initialize a list to store potential shot coordinates
+    potential_shots = []
+    shifts = []
+
+    # Define possible shifts based on the ship alignment
+    if alignment == "Vertical":
+        shifts = [[1, 0], [-1, 0]]
+    elif alignment == "Horizontal":
+        shifts = [[0, 1], [0, -1]]
+    elif alignment == "Single":
+        shifts = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+
+    # Loop through the shifts to find the potential shots
+    for coord in cpu_shot_log_tmp:
+        row, column = coord
+        for drow, dcolumn in shifts:
+            new_row, new_column = row + drow, column + dcolumn
+
+            # Check if the cell is within map boundaries and is untargeted
+            if 0 <= new_row <= max_row and 0 <= new_column <= max_column:
+                # Then check if the cell hasn't been shot at before
+                if map_to_search[new_row][new_column] == DEFAULT_SYMBOL:
+                    potential_shots.append([new_row, new_column])
+                    print("new potential shots: ", potential_shots)
+
+        if len(potential_shots) > 0:
+            break
+
+    if len(potential_shots) == 0:
+        print("found noo coordinates on select_best_shot_based_on_alignment")
+        shifts = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+        for coord in cpu_shot_log_tmp:
+            row, column = coord
+            for drow, dcolumn in shifts:
+                new_row, new_column = row + drow, column + dcolumn
+                # Check if the new coordinates are within map boundaries and haven't been shot at before
+                if 0 <= new_row <= max_row and 0 <= new_column <= max_column:
+                    # Then check if the cell hasn't been shot at before
+                    if map_to_search[new_row][new_column] == DEFAULT_SYMBOL:
+                        potential_shots.append([new_row, new_column])
+                        print("new potentail shots: ", potential_shots)
+                if len(potential_shots) > 0:
+                    break
+            if len(potential_shots) > 0:
+                break
+    # Randomly choose one of the potential shots if any are available
+    if len(potential_shots) > 0:
+        selected_row, selected_column = random.choice(potential_shots)
+        print("found coordinates on select_best_shot_based_on_alignment", selected_row, selected_column)
+        return selected_row, selected_column
+
+    # If no potential shots were found, return None, None
+    return None, None
+
 
