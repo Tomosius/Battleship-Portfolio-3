@@ -733,3 +733,38 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
         # Return the final shooting coordinates
         return coordinate_row, coordinate_column
+
+
+
+def find_ship_and_coordinates(fleet, target_coordinates):
+    """
+    Find the details of the ship and its coordinates in the fleet.
+
+    Args:
+        fleet (dict): Dictionary containing information about each ship.
+        target_coordinates (list): The [row, column] coordinates to search for.
+
+    Returns:
+        tuple: Contains ship_name, ship_size, ship_coordinates_list, coordinates_set_id, and coordinates_id.
+               If no match is found, returns noneFound for each field.
+    """
+
+    # Loop through the fleet dictionary to check each ship's coordinates
+    for ship_name, ship_info in fleet.items():
+
+        # Enumerate gives us the index (coordinates_set_id) and the value (ship_coordinates_list)
+        for coordinates_set_id, ship_coordinates_list in enumerate(ship_info['Coordinates']):
+
+            try:
+                # Try to find the index of the target_coordinates in the ship_coordinates_list
+                coordinates_id = ship_coordinates_list.index(target_coordinates)
+
+                # If found, return all the relevant details
+                return ship_name, ship_info['Size'], ship_coordinates_list, coordinates_set_id, coordinates_id
+
+            except ValueError:  # ValueError will be raised if target_coordinates is not in ship_coordinates_list
+                # If not found, continue to the next set of coordinates
+                continue
+
+    # If we've gone through the whole loop and haven't returned yet, the coordinates weren't found in any ship
+    return noneFound, noneFound, noneFound, noneFound, noneFound
