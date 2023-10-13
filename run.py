@@ -499,3 +499,16 @@ def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
             game_map[row][column] = SHIP_SYMBOLS[alignment][1]
 
 
+def map_show_only_ships(game_map):
+    """
+    function to remove Miss symbols from map and replace them with DEFAULT_SYMBOL, so map shows just ships
+    :param game_map:
+    :return:
+    """
+    global SHIP_SYMBOLS, DEFAULT_SYMBOL
+    for row in range(len(game_map)):
+        for column in range(len(game_map[0])):
+            if game_map[row][column] == SHIP_SYMBOLS["Miss"][0]:
+                game_map[row][column] = DEFAULT_SYMBOL
+    return game_map
+
