@@ -192,4 +192,20 @@ def create_map(width, height, symbol):
     """
     return [[symbol for _ in range(height)] for _ in range(width)]
 
+def print_fleet(fleet):
+    """Print the fleet information in a formatted manner.
+
+    Args:
+        fleet (dict): Dictionary containing fleet information.
+    """
+    print("{:<20} {:<10} {:<10}".format(
+        "ShipType", "Size", "Quantity"))
+    print("=" * 40)
+    for ship, ship_details in fleet.items():
+        size = ship_details["Size"]
+        quantity = ship_details["Quantity"]
+        print("{:<20} {:<10} {:<10} ".format(
+            ship, size, quantity))
+
+
 
