@@ -1112,3 +1112,51 @@ def update_cpu_shot_log(coordinates_list):
 
     # Return the updated CPU shot log
     return cpu_shot_log_tmp
+
+
+
+def find_first_ship_alignment(log):
+    """
+    Attempts to identify the first alignment of a ship based on its coordinates,
+    by comparing each coordinate with every other coordinate. Returns the index
+    of the first coordinate in that alignment.
+
+    Parameters:
+    - log (List[List[int]]): A list of [row, column] coordinates representing the ship's location.
+
+    Returns:
+    - tuple: A tuple containing:
+        1. A string indicating the first observed alignment ('None', 'Single', 'Horizontal', 'Vertical').
+        2. An integer representing the index of the first coordinate in that alignment, or None if not applicable.
+    """
+
+    # Handle the case where the log is empty
+    # Return 'None' for both the alignment and index
+    if len(log) == 0:
+        return ('None', None)
+
+    # Handle the case where there is only one coordinate in the log
+    # In this case, the ship is considered 'Single'
+    elif len(log) == 1:
+        print("based on spu log find_first_ship_alignment as single")
+        return ('Single', 0)
+
+    # Loop through each coordinate in the log for comparison
+    for i, (row1, column1) in enumerate(log):
+        # Nested loop to compare the current coordinate with subsequent coordinates
+        for j, (row2, column2) in enumerate(log[i + 1:], start=i + 1):
+
+            # If the rows are the same across two coordinates, it's horizontally aligned
+            if row1 == row2:
+                print(" based on cpu log find_first_ship_alignment as Vertical")
+                return ('Horizontal', i)
+            # If the columns are the same across two coordinates, it's vertically aligned
+            elif column1 == column2:
+                print("based on cpu log find_first_ship_alignment as horizontal")
+                return ('Vertical', i)
+
+    # If no alignment is found, return 'None' for both the alignment and index
+    return ('None', None)
+
+
+
