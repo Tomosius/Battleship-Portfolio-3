@@ -224,3 +224,37 @@ def print_fleet_with_coodinates(fleet):
         coordinates = str(ship_details["Coordinates"])  # Convert the list to a string
         print("{:<20} {:<10} {:<10} {:<50}".format(
             ship, size, quantity, coordinates))
+
+def print_map(game_map):
+    """
+    Print the game map in a human-readable format.
+
+    Args:
+        game_map (list): A 2D list representing the game map,
+                         where each cell contains the status of a ship
+                         or water.
+
+    Output:
+        The function will print the game map to the console.
+    """
+
+    # Print column headers (0, 1, 2, ..., N)
+    print("   ", end="")
+    for col_index in range(len(game_map[0])):
+        print(f"{col_index}  ", end="")
+
+    # Print a separator line
+    print("\n   " + "=" * (len(game_map[0]) * 3))
+
+    # Loop through each row
+    for row_index, row in enumerate(game_map):
+        # Print row header
+        print(f"{row_index} |", end=" ")
+
+        # Loop through each cell in the row
+        for value in row:
+            # Print the cell value followed by two spaces
+            print(f"{value}  ", end="")
+
+        # Move to the next line at the end of each row
+        print()
