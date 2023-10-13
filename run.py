@@ -512,3 +512,224 @@ def map_show_only_ships(game_map):
                 game_map[row][column] = DEFAULT_SYMBOL
     return game_map
 
+
+
+# Game logic functions:
+#----------------------
+
+def search_map_for_pattern(game_map, height, width):
+    """
+    Find all occurrences of a pattern of DEFAULT_SYMBOL in a map and return their coordinates.
+
+    Args:
+        game_map (List[List[str]]): The map as a nested list.
+        height (int): Height of the pattern to search for.
+        width (int): Width of the pattern to search for.
+
+    Returns:
+        List[Tuple[int, int]]: A list of coordinates (row, col) where the pattern is found,
+        or an empty list if no pattern is found.
+    """
+
+    # Reference the global variable for the default symbol
+    global DEFAULT_SYMBOL
+
+    # Create a pattern of DEFAULT_SYMBOL with the given height and width
+    pattern = [[DEFAULT_SYMBOL for _ in range(width)] for _ in range(height)]
+
+    # Retrieve the dimensions of the game map
+    map_height, map_width = len(game_map), len(game_map[0])
+
+    # Initialize an empty list to collect coordinates where the pattern is found
+    coordinates = []
+
+    # Traverse the map to find matching patterns
+    for row in range(map_height - height + 1):
+        for col in range(map_width - width + 1):
+            # Assume pattern matches until proven otherwise
+            pattern_matches = True
+
+            # Validate each cell in the subgrid against the pattern
+            for i in range(height):
+                for j in range(width):
+                    if game_map[row + i][col + j] != DEFAULT_SYMBOL:
+                        pattern_matches = False  # Set to False if any cell doesn't match
+                        break  # Exit the inner loop
+
+                if not pattern_matches:
+                    break  # Exit the outer loop
+
+            # If pattern matches, append the coordinates to the list
+            if pattern_matches:
+                coordinates.append([row, col])
+    # Check if any coordinates were found
+    if len(coordinates) < 2:
+        return "noneFound"
+    else:
+        return coordinates
+
+
+
+def find_biggest_ship_in_fleet(fleet):
+    """
+    Find the biggest ship in the fleet by its size.
+
+    Args:
+        fleet (dict): A dictionary representing the fleet of ships.
+            Each key is a ship name, and each value is another dictionary
+            containing 'Size' and 'Quantity'.
+
+    Returns:
+        tuple: A tuple containing the name and size of the biggest ship.
+        None: If there are no ships with a quantity greater than 0.
+    """
+
+    # Filter out ships with zero quantity
+    # Create a new dictionary that only includes ships with a quantity greater than zero
+    available_ships = {k: v for k, v in fleet.items() if v["Quantity"] > 0}
+
+    # Check if any ships are available
+    # Return None if the available_ships dictionary is empty, indicating no available ships
+    if not available_ships:
+        return "noneFound"
+
+    # Find the biggest ship based on the 'Size' value in the dictionary
+    # Use the max() function with a custom key function to find the ship with the largest size
+    biggest_ship = max(available_ships, key=lambda ship: available_ships[ship]["Size"])
+
+    # Retrieve the size of the biggest ship
+    biggest_ship_size = available_ships[biggest_ship]["Size"]
+
+    # Print the name and size of the biggest ship for debugging purposes
+    print(f"Biggest ship: {biggest_ship}, Size: {biggest_ship_size}")
+
+    # Return a tuple containing the name and size of the biggest ship
+    return biggest_ship, biggest_ship_size
+
+
+def map_search_reduce_width(height, width, game_map):
+    """
+    Reduce the width dimension and search for the pattern again.
+    """
+    width -= 1  # Decrease the width by 1
+    coordinates = search_map_for_pattern(game_map, height, width)  # Search for pattern
+    if coordinates == "noneFound":
+        print("we have found no coordinates with height and width: ", height, width)
+        width += 1  # Restore the width back to the original
+        height -= 1  # Decrease the height by 1
+        coordinates = search_map_for_pattern(game_map, height, width)  # Search again
+        if coordinates == "noneFound":
+            print("we have found no coordinates with height and width: ", height, width)
+            width -= 1  # Now reduce both height and width by 1
+
+    return height, width, coordinates
+
+def map_search_reduce_height(height, width, game_map):
+    """
+    Reduce the height dimension and search for the pattern again.
+    """
+    height -= 1  # Decrease the height by 1
+    coordinates = search_map_for_pattern(game_map, height, width)  # Search for pattern
+    if coordinates == "noneFound":
+        print("we have found no coordinates with height and width: ", height, width)
+        height += 1  # Restore the height back to the original
+        width -= 1  # Decrease the width by 1
+        coordinates = search_map_for_pattern(game_map, height, width)  # Search again
+        if coordinates == "noneFound":
+            print("we have found no coordinates with height and width: ", height, width)
+            height -= 1  # Now reduce both height and width by 1
+    return height, width, coordinates
+
+
+def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
+    """
+    Choose shooting coordinates for the CPU based on the biggest ship in the fleet.
+
+    Args:
+        fleet_to_search (dict): List of ships in the fleet.
+        game_map (list): The map to search for shooting coordinates.
+
+    Returns:
+        tuple: The chosen shooting coordinates (coordinateX, coordinateY).
+    """
+
+    # Declare global variables used in the function
+    global cpu_shot_log_tmp, DEFAULT_SYMBOL
+
+    # Initialize variables
+    coordinates = ""
+    height = ""
+    width = ""
+
+    # Find the biggest ship in the fleet
+    ship_name, ship_size = find_biggest_ship_in_fleet(fleet_to_search)
+
+    # Check if there are any ships left in the fleet
+    if ship_name is None:
+        print("game over print")  # No ships left, game over
+    else:
+        # Calculate the initial pattern dimensions based on the biggest ship
+        width = ship_size * 2 - 1
+        height = ship_size * 2 - 1
+
+        # Attempt to find the pattern in the map
+        coordinates = search_map_for_pattern(game_map, height, width)
+
+        # If no suitable coordinates are found, enter a loop to adjust the pattern
+        if coordinates == "noneFound":
+            while coordinates == "noneFound":
+
+                # Try searching again with the current pattern dimensions
+                coordinates = search_map_for_pattern(game_map, height, width)
+
+                # Break the loop if coordinates are found
+                if coordinates != "noneFound":
+                    print("cpu_choose_shooting_coordinates_biggest_ship found coordinates", coordinates)
+                    break
+
+                # Randomly choose which dimension to reduce
+                reduction = random.choice(["height", "width"])
+
+                # Log the current unsuccessful dimensions
+                print("we have found no coordinates with height and width:", height, width)
+
+                # Reduce the height and search again
+                if reduction == "height":
+                    height, width, coordinates = map_search_reduce_height(height, width, game_map)
+
+                # Reduce the width and search again
+                if reduction == "width":
+                    height, width, coordinates = map_search_reduce_width(height, width, game_map)
+
+                # Various exit conditions for the loop
+                if (height < ship_size and width <= 1) or (height <= 1 and width < ship_size) or (height < 1 or width < 1):
+                    print("we have found no coordinates with height and width:", height, width)
+                    break
+
+        # Randomly choose from the found coordinates
+        chosen_coordinates = random.choice(coordinates)
+
+        # Validate the format of the chosen coordinates
+        if len(chosen_coordinates) != 2:
+            print(f"Error: chosen_coordinates contains {len(chosen_coordinates)} values, expected 2.")
+            return None, None  # Handle error case
+
+        # Extract the row and column from the chosen coordinates
+        coord_row, coord_column = chosen_coordinates
+
+        # Log the details of the chosen pattern
+        print("coordinates before selecting center of pattern:", coord_row, coord_column, "height and width:", height, width)
+
+        # Calculate the middle point of the pattern
+        middle_width = (width // 2) + random.choice([1, width % 2]) - 1
+        middle_height = (height // 2) + random.choice([1, height % 2]) - 1
+
+        # Calculate the final shooting coordinates based on the middle point
+        coordinate_column = coord_column + middle_width
+        coordinate_row = coord_row + middle_height
+
+        # Log the final shooting coordinates
+        print("coordinate_x, coordinate_y", coordinate_row, coordinate_column)
+
+        # Return the final shooting coordinates
+        return coordinate_row, coordinate_column
