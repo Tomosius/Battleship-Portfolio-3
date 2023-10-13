@@ -192,6 +192,9 @@ def create_map(width, height, symbol):
     """
     return [[symbol for _ in range(height)] for _ in range(width)]
 
+# Print functions
+#----------------
+
 def print_fleet(fleet):
     """Print the fleet information in a formatted manner.
 
@@ -258,3 +261,139 @@ def print_map(game_map):
 
         # Move to the next line at the end of each row
         print()
+
+
+def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
+    """
+    Print two 2D maps side by side with labels and a customizable gap.
+
+    Args:
+        map_left (list): A 2D list representing the first map.
+        map_right (list): A 2D list representing the second map.
+        label_left (str): Label for the first map.
+        label_right (str): Label for the second map.
+        gap (int): Number of blank spaces between the two maps. Default is 10.
+    """
+
+    # Constants for character dimensions and formatting
+    char_width = len("X")  # Width of a single character (assuming monospaced font)
+
+    # Calculate the maximum number of digits in row and column indices
+    num_digits_map_width = len(str(len(map_left[0])))
+    num_digits_map_height = len(str(len(map_left)))
+
+    # Create a string of blank spaces for the gap between maps
+    gap_str = ' ' * gap
+
+    # Calculate the left-side offset for aligning map and row indices
+    row_index_separator = " | "
+    print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
+
+    # Center-align the labels for both maps
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
+    label_left_centered = label_left.center(number_char_table_total)
+    label_right_centered = label_right.center(number_char_table_total)
+
+    # Print the centered labels for both maps
+    print(f"{print_map_left_offset}{label_left_centered}{gap_str}{print_map_left_offset} {label_right_centered}")
+
+    # Print column headers for both maps
+    print(print_map_left_offset, end=" ")
+    for col_index in range(len(map_left[0])):
+        if col_index == len(map_left[0]) - 1:  # Check if it's the last column index
+            print(f"{col_index}".rjust(num_digits_map_height + char_width),
+                  end="")  # i do not want gap after last index, as it will be not aligned
+        else:
+            print(f"{col_index}".rjust(num_digits_map_height + char_width), end=" ")
+    print(gap_str, print_map_left_offset, end=" ")
+    for col_index in range(len(map_right[0])):
+        # Right-justify the column index with proper spacing
+        print(f"{col_index}".rjust(num_digits_map_height + char_width), end=" ")
+    print()
+    # Print the horizontal separator line
+    # This step prints a separator line to visually separate the maps
+    separator_length_left = len(map_left[0]) * (num_digits_map_width + char_width + 1)
+    separator_length_right = len(map_right[0]) * (num_digits_map_width + char_width + 1)
+    print(print_map_left_offset + "=" * separator_length_left, end=gap_str)
+    print(" " + print_map_left_offset + "=" * separator_length_right)
+
+    # Loop through each row to print map values
+    for row_index, (row_left, row_right) in enumerate(zip(map_left, map_right)):
+        # Print row for the left map
+        print(f"{row_index}".rjust(num_digits_map_width + 1), end=row_index_separator)
+        for value in row_left:
+            width = len(str(value))
+            # Right-justify the map value with proper spacing
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+        # Insert the gap between the two maps
+        print(gap_str, end="")
+        # Print row for the right map
+        print(f"{row_index}".rjust(num_digits_map_width + 1), end=row_index_separator)
+        for value in row_right:
+            width = len(str(value))
+            # Right-justify the map value with proper spacing
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+        # Move to the next line
+        print()
+
+
+
+def print_map_and_list(map_left, instructions, label_left, gap=10):
+    """
+    Print a 2D map and a list side by side with labels and a customizable gap.
+
+    Args:
+        map_left (list): A 2D list representing the first map.
+        instructions (list): A list of strings representing the instructions.
+        label_left (str): Label for the first map.
+        gap (int): Number of blank spaces between the map and the instructions. Default is 10.
+    """
+
+    # Constants for character dimensions and formatting
+    char_width = len("X")  # Width of a single character (assuming monospaced font)
+
+    # Calculate the maximum number of digits in row and column indices
+    num_digits_map_width = len(str(len(map_left[0])))
+    num_digits_map_height = len(str(len(map_left)))
+
+    # Create a string of blank spaces for the gap between map and instructions
+    gap_str = ' ' * gap
+
+    # Calculate the left-side offset for aligning map and row indices
+    row_index_separator = " | "
+    print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
+
+    # Center-align the label for the map
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
+    label_left_centered = label_left.center(number_char_table_total)
+
+    # Print the centered label for the map
+    print(f"{print_map_left_offset}{label_left_centered}")
+
+    # Print column headers for the map
+    print(print_map_left_offset, end=" ")
+    for col_index in range(len(map_left[0])):
+        print(f"{col_index}".rjust(num_digits_map_height + char_width), end=" ")
+    print(gap_str, "Instructions")
+    print("    ".rjust(num_digits_map_width + 1),"=" * (number_char_table_total))  # Draw a separator line
+
+    # Loop through each row to print map values and instructions
+    for row_index in range(max(len(map_left), len(instructions))):
+        # Print row for the map
+        if row_index < len(map_left):
+            print(f"{row_index}".rjust(num_digits_map_width + 1), end=row_index_separator)
+            for value in map_left[row_index]:
+                width = len(str(value))
+                print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+        else:
+            print(" " * (num_digits_map_width + num_digits_map_height + len(row_index_separator) + char_width * len(
+                map_left[0])), end="")
+
+        # Insert the gap between the map and the instructions
+        print(gap_str, end="")
+
+        # Print instruction for the row
+        if row_index < len(instructions):
+            print(instructions[row_index])
+        else:
+            print()
