@@ -768,3 +768,278 @@ def find_ship_and_coordinates(fleet, target_coordinates):
 
     # If we've gone through the whole loop and haven't returned yet, the coordinates weren't found in any ship
     return noneFound, noneFound, noneFound, noneFound, noneFound
+
+
+
+def cpu_deploy_all_ships(game_map,fleet):
+    """
+    Deploy all CPU ships on the map.
+
+    Global Variables:
+        fleet (dict): Contains the CPU's fleet information.
+        DEFAULT_FLEET (dict): Default settings for the fleet.
+        game_map (list): 2D map for CPU.
+        DEFAULT_SYMBOL (str): Default symbol for empty cells.
+        SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
+
+    Updates:
+        - fleet: Updated with the ship coordinates.
+        - game_map: Updated with deployed ships.
+
+    Returns:
+        None
+    """
+
+    # Declare global variables for function access
+    global DEFAULT_SYMBOL, SHIP_SYMBOLS
+
+    # Initialize the map with default symbols if not already done
+
+
+    # Creating empty list for ship coordinates, which will be appended to fleet later
+    ship_coordinates = []
+
+    # Iterate through each ship type in the fleet configuration
+    for ship_name, ship_info in fleet.items():
+        quantity = ship_info["Quantity"]  # Extract the number of ships of this type
+        size = ship_info["Size"]  # Extract the size of this type of ship
+
+        # Deploy the required number of each ship type
+        for i in range(quantity):
+            # Initialize variables to keep track of the ship's location and alignment
+            location = ""
+            alignment = ""
+            # Handle single-cell ships separately
+            if size == 1:
+                alignment = "Single"
+                location = random.choice(search_map_for_pattern(game_map, 1, 1))
+                if location == "noneFound":
+                    return False
+            else:
+                # Randomly choose alignment for multi-cell ships
+                alignment = random.choice(["Horizontal", "Vertical"])
+
+
+                # Find a suitable location based on the alignment
+                if alignment == "Vertical":
+                    location = random.choice(search_map_for_pattern(game_map, size, 1))
+                    #print("trying vetical", location, size)
+
+                    if len(location) < 2:
+                        alignment = "Horizontal"
+                        location = random.choice(search_map_for_pattern(game_map, 1, size))
+                        #print("no luck vertical, trying horizontal", location, size)
+
+
+
+                elif alignment == "Horizontal":
+                    location = random.choice(search_map_for_pattern(game_map, 1, size))
+                    #print("trying horizontal", location, size)
+
+                    #print(location)
+                    if len(location) < 2:
+                        alignment = "Vertical"
+                        location = random.choice(search_map_for_pattern(game_map, size, 1))
+                        #print("no luck trying vertical", location, size)
+            if len(location) == 2:
+                # Deploy the ship at the chosen location
+                ship_coordinates = map_show_ship_or_symbols(game_map, size, location, alignment, ship_name, fleet)
+                # append ship coordinates to fleet
+                fleet[ship_name]["Coordinates"].append(ship_coordinates)
+            if len(location) < 2:
+                return False
+
+
+def handle_miss(player, row, column, map_hidden, map_display):
+    """
+    Handle the scenario where the shot misses any ship.
+
+    Args:
+        player (str): The player making the shot ("CPU" or "Human").
+        column (int): The column-coordinate of the shot.
+        row (int): The row-coordinate of the shot.
+        map_hidden (list): The hidden map that tracks shots.
+        map_display (list): The displayed map that shows ships.
+
+    Global Variables:
+        SHIP_SYMBOLS (dict): Symbols used for different states of the ship.
+        start_time (float): The game start time for logging.
+        game_actions_log (list): Log of game actions.
+
+    Returns:
+        None
+    """
+
+    # Declare global variables for ship symbols, start time, and the game actions log
+    global SHIP_SYMBOLS, start_time, game_actions_log
+
+    # Calculate the time elapsed since the game started for logging purposes
+    timer = time.time() - start_time
+
+    # Create an action outcome message indicating a miss
+    action_outcome = 'it was a MISS'
+
+    # Log the miss action into the game actions log
+    game_actions_log.append([player, timer, row, column, action_outcome])
+
+    # Update the hidden map at the given row and column to mark the miss
+    # Use the symbol designated for "Miss" in the SHIP_SYMBOLS dictionary
+    map_hidden[row][column] = SHIP_SYMBOLS["Miss"][0]
+
+    # Update the display map at the given row and column to mark the miss
+    # Use the symbol designated for "Miss" in the SHIP_SYMBOLS dictionary
+    map_display[row][column] = SHIP_SYMBOLS["Miss"][0]
+
+
+
+def action_perform_shoot(player, row, column, map_hidden, map_display, fleet):
+    """
+    Perform a shooting action on the game board.
+    """
+    global game_actions_log, start_time, SHIP_SYMBOLS  # Declare global variables
+
+    # Find the ship details at the given coordinates
+    ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id = find_ship_and_coordinates(fleet, [row, column])
+
+    try:
+        if ship_name is not "noneFound":  # If a ship is found at the coordinates
+            print(f'{player} performed shot on coordinates {row} and {column}, {ship_name} was damaged')
+            print("damaged ship cooordinates are: ", coordinates_list)
+
+            # Logic for handling ship hit
+            handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
+                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id)
+            return "Hit"
+
+        else:  # If no ship was found at the coordinates
+            print(f'{player} performed shot on coordinates {row} and {column}, it was a MISS')
+
+            # Logic for handling missed shot
+            handle_miss(player, row, column, map_hidden, map_display)
+            return "Miss"
+
+    except Exception as e:  # Handle exceptions
+        print(f"An error occurred: {e}")
+        return None
+
+def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
+                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id):
+    """
+    Handle the logic when a ship is hit.
+
+    Args:
+        player (str): The player making the shot ("CPU" or "Human").
+        column (int): The column-coordinate of the shot.
+        row (int): The row-coordinate of the shot.
+        map_hidden (list): The hidden map that tracks shots.
+        map_display (list): The displayed map that shows ships.
+        fleet (dict): Information about the fleet of ships.
+        ship_name (str): Name of the ship that was hit.
+        ship_size (int): Size of the ship that was hit.
+        coordinates_list (list): List of coordinates of the ship.
+        coordinates_id (int): Index of the coordinates in the list.
+
+    Global Variables:
+        game_actions_log (list): Log of game actions.
+        start_time (float): The game start time for logging.
+        SHIP_SYMBOLS (dict): Symbols used for different states of the ship.
+        cpu_shot_log_tmp (list): Temporary log for CPU actions.
+
+    Returns:
+        None
+    """
+
+    # Declare global variables for logging and timing
+    global game_actions_log, start_time, SHIP_SYMBOLS, cpu_shot_log_tmp
+
+    # Update the hidden map to indicate a hit
+    map_hidden[row][column] = SHIP_SYMBOLS["Hit"][0]
+    # Update the display map to indicate a hit
+    map_display[row][column] = SHIP_SYMBOLS["Hit"][0]
+
+    # If the player is the CPU, log its actions
+    if player == "CPU":
+        # Log the coordinates where the hit occurred in a temporary list
+        cpu_shot_log_tmp.append([row, column])
+
+    # Determine the alignment of the ship based on its coordinates
+    alignment, coordinates_index = find_first_ship_alignment(coordinates_list)
+
+    # Special case: If the ship is of size 1 and has been hit, mark it as sunk
+    if ship_size == 1 and (map_hidden[row][column] == SHIP_SYMBOLS["Hit"][0]):
+        map_hidden[row][column] = map_display[row][column]
+        ship_sunk = True
+
+    # For ships larger than size 1, iterate through their coordinates to check if all are hit
+    if ship_size > 1:
+        for coord in coordinates_list:
+            row, column = coord  # Extract the row and column from each coordinate
+            if map_hidden[row][column] == SHIP_SYMBOLS["Hit"][0]:
+                ship_sunk = True  # Mark as sunk if all parts are hit
+            else:
+                ship_sunk = False  # If any part is not hit, break the loop
+                break
+
+    # If the ship is confirmed as sunk, update various states and logs
+    if ship_sunk == True:
+        alignment += "Sunk"
+        print(player, " has sunk ", ship_name, " on coordinates :", row, column)
+        handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, map_display, map_hidden, alignment)
+
+
+def handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, map_display,
+                     map_hidden, alignment):
+    """
+    Handle actions and updates for when a ship is sunk.
+
+    Args:
+        player (str): The player who sunk the ship ("CPU" or "Human").
+        fleet (dict): The current fleet information.
+        ship_name (str): The name of the ship that was sunk.
+        ship_size (int): The size of the ship.
+        coordinates_list (list): The list of coordinates of the ship.
+        coordinates_list_id (int): The ID of the ship's coordinates in the fleet.
+        map_display (list): The displayed map that shows ships.
+        map_hidden (list): The hidden map that tracks shots.
+        alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
+
+    Global Variables:
+        start_time (float): Game start time.
+        cpu_shot_log_tmp (list): Temporary log of CPU actions.
+        SHIP_SYMBOLS (dict): Symbols for different ship states.
+        game_actions_log (list): Log of game actions.
+        game_result (str): The result of the game ("Game Over" or None).
+    """
+
+    # Declare global variables
+    global start_time, cpu_shot_log_tmp, SHIP_SYMBOLS, game_actions_log, game_result
+
+
+    print(" before updating map, i just want to see map_display, ship_size, coordinates_list[0], alignment, ship_name, fleet", ship_size, coordinates_list[0], alignment, ship_name, coordinates_list_id, coordinates_list)
+    print(len(coordinates_list))
+    print(alignment)
+    map_show_ship_or_symbols(map_display, ship_size, coordinates_list[0], alignment, ship_name, fleet)
+    map_show_ship_or_symbols(map_hidden, ship_size, coordinates_list[0], alignment, ship_name, fleet)
+    print_two_maps(map_hidden, map_display, " hidden", "ships", gap = 5)
+
+    # Log the ship-sinking action
+    timer = time.time() - start_time
+    action_outcome = f'{ship_name} was sunk'
+    game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
+
+    # Update the CPU's temporary shot log if the player is the CPU
+    if player == "CPU":
+        cpu_shot_log_tmp = update_cpu_shot_log(coordinates_list)
+        print("after updating cpu shoot log", cpu_shot_log_tmp)
+    print("now should follow coordinates removal")
+    print(" jautiena remove coordinates from fleet ship name", ship_name, "coordinates set id: ", coordinates_set_id)
+    remove_coordinates_from_fleet(fleet, ship_name, coordinates_set_id)
+
+    # Check if all ships are sunk (game over)
+    if not fleet:
+        timer = time.time() - start_time
+        action_outcome = 'Game Over'
+        game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
+        game_result = "Game Over"
+
+
