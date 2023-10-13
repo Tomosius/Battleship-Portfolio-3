@@ -100,4 +100,77 @@ GAME_ADJUST_MAIN = ["If you to adjust your FLEET, type" "\u001b[33mF\u001b[0m" "
                     "",
                     "To return to main menu, press " "\u001b[33m0\u001b[0m" " and press enter"]
 
+# Helper Functions
+# ----------------
+
+def clear_terminal():
+    """
+    Clear the terminal screen.
+    This function uses different commands for POSIX (Unix/Linux/MacOS) and Windows systems.
+    """
+    if os.name == 'posix':  # Unix/Linux/MacOS
+        os.system('clear')
+    elif os.name == 'nt':  # Windows
+        os.system('cls')
+
+
+def print_acid_effect():
+    """
+    Prints a text art of an acid-like effect to the terminal.
+
+    This function performs the following steps:
+    1. Clears the terminal screen for a clean start.
+    2. Prints each character of the `acid_text` string one by one with a slight delay.
+    3. Waits for a short moment to let the user view the effect.
+    4. Clears the terminal screen again.
+
+    Note: The function uses the `os` and `time` modules.
+    """
+    # ASCII art representation of the acid effect
+    acid_logo = """
+                              _  |____________|  _
+                       _=====| | |            | | |==== _
+                 =====| |.---------------------------. | |====
+   <--------------------'   .  .  .  .  .  .  .  .   '--------------/
+     \\                                                             /
+      \\_______________________________________________WWS_________/
+  wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+   wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+
+    """
+    acid_text = """
+██████   █████  ████████ ████████ ██      ███████ ███████ ██   ██ ██ ██████       ██████   █████  ███    ███ ███████ 
+██   ██ ██   ██    ██       ██    ██      ██      ██      ██   ██ ██ ██   ██     ██       ██   ██ ████  ████ ██      
+██████  ███████    ██       ██    ██      █████   ███████ ███████ ██ ██████      ██   ███ ███████ ██ ████ ██ █████   
+██   ██ ██   ██    ██       ██    ██      ██           ██ ██   ██ ██ ██          ██    ██ ██   ██ ██  ██  ██ ██      
+██████  ██   ██    ██       ██    ███████ ███████ ███████ ██   ██ ██ ██           ██████  ██   ██ ██      ██ ███████ 
+    """
+
+    # Step 1: Clear the terminal
+    clear_terminal()
+
+    # Step 2: Print the text character by character
+    for char in acid_logo:
+        print(char, end='', flush=True)  # Using flush=True to force the output to be printed
+        time.sleep(0.001)  # Delay of 0.005 seconds for each character
+
+    # Step 3: Wait for a moment to let the user view the effect
+    time.sleep(1)
+
+    # Step 4: Clear the terminal again
+    clear_terminal()
+
+    # Step 5: Print the text character by character
+    for char in acid_text:
+        print(char, end='', flush=True)  # Using flush=True to force the output to be printed
+        time.sleep(0.001)  # Delay of 0.005 seconds for each character
+
+    # Step 3: Wait for a moment to let the user view the effect
+    time.sleep(1)
+
+    # Step 4: Clear the terminal again
+    clear_terminal()
+
+
 
