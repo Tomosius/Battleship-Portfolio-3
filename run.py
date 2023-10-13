@@ -405,7 +405,7 @@ def print_map_and_list(map_left, instructions, label_left, gap=10):
 def create_coordinate_list(row, column,alignment,ship_size):
     coordinates_list = []
     if ship_size == 1:
-        coordinates_list.append(coordinates)
+        coordinates_list.append([row,column])
     else:
         if alignment == "Horizontal" or alignment == "HorizontalSunk":
             for cell in range(ship_size):
