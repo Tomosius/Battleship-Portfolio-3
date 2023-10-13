@@ -209,3 +209,18 @@ def print_fleet(fleet):
 
 
 
+def print_fleet_with_coodinates(fleet):
+    """Print the fleet information in a formatted manner.
+
+    Args:
+        fleet (dict): Dictionary containing fleet information.
+    """
+    print("{:<20} {:<10} {:<10} {:<50}".format(
+        "ShipType", "Size", "Quantity", "Coordinates"))
+    print("=" * 40)
+    for ship, ship_details in fleet.items():
+        size = ship_details["Size"]
+        quantity = ship_details["Quantity"]
+        coordinates = str(ship_details["Coordinates"])  # Convert the list to a string
+        print("{:<20} {:<10} {:<10} {:<50}".format(
+            ship, size, quantity, coordinates))
