@@ -5,6 +5,7 @@ import random  # For generating random numbers
 import copy  # For creating deep copies of data structures
 import os  # For clearing the terminal screen
 import time  # For time-related functionalities
+import re # For handling user input expressions
 
 
 # Constants for map dimensions and default symbol
@@ -13,13 +14,13 @@ DEFAULT_MAP_WIDTH = 10
 map_height_cpu = "" # empty value for map size, it can be adjusted in settings, if not, function will assign irr DEFAULT_HEIGHT
 map_width_cpu = ""# empty value for map size, it can be adjusted in settings, if not, function will assign irr DEFAULT_WIDTH
 DEFAULT_SYMBOL = '?'  # Symbol representing an empty cell in the map
-DEFAULT_GAPS_BETWEEN_MAPS = False
+DEFAULT_GAPS_BETWEEN_MAPS = True
 
 # Initialize 2D maps for CPU and Player
 map_cpu_display = []
 map_cpu_hidden = []
 map_player_hidden = []
-map_player = []
+map_player_ = []
 
 # Initialize game-related variables
 save_map_height = "" # variable to keep for current game settings (when starting game, this will be used)
@@ -71,7 +72,7 @@ SHIP_SYMBOLS = {
 # Define the default fleet configuration
 DEFAULT_FLEET = {
     "AircraftCarrier": {"Size": 5, "Quantity": 1, "Coordinates": []},
-    "Battleship": {"Size": 4, "Quantity":2, "Coordinates": []},
+    "Battleship": {"Size": 4, "Quantity":1, "Coordinates": []},
     "Cruiser": {"Size": 3, "Quantity": 2, "Coordinates": []},
     "Submarine": {"Size": 3, "Quantity":1, "Coordinates": []},
     "Destroyer": {"Size": 2, "Quantity": 2, "Coordinates": []},
@@ -82,7 +83,7 @@ fleet_player = {} # this will be used later to store CPU fleet, to store CPU fle
 
 
 # Game instructions and settings, presented as lists
-INSTRUCTIONS = ("1. Ships can be aligned Horizontally or Vertically",
+INSTRUCTIONS = ["1. Ships can be aligned Horizontally or Vertically",
                 "2. Ships can NOT be touching each other, but this can be changed in game settings",
                 "3. Default game map is size 10 by 10",
                 "4. Player has to enter coordinates as follows: Y,X - ROW, COLUMN. Numbers separated by COMMA",
@@ -90,7 +91,7 @@ INSTRUCTIONS = ("1. Ships can be aligned Horizontally or Vertically",
                 "6. " "\u001b[32mVERTICAL\u001b[0m" " ships will be GREEN color",
                 "7. " "\u001b[31mDAMAGED\u001b[0m" " ships will be green color",
                 "If you wwant to adjust game settings type " "\u001b[33mY\u001b[0m" " and press ENTER",
-                "If you want to start game just press " "\u001b[33mENTER\u001b[0m")
+                "If you want to start game just press " "\u001b[33mENTER\u001b[0m"]
 
 GAME_ADJUST_MAIN = ["If you to adjust your FLEET, type" "\u001b[33mF\u001b[0m" " and press enter",
                     "If you want to change MAP size, type " "\u001b[33mM\u001b[0m" " and press enter",
@@ -175,22 +176,29 @@ wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 
 # Initial game start functions
 #-----------------------------
+def create_initial_game_variables(height, width, symbol, fleet):
+    new_map = create_map(width, height, symbol)
+    new_map_hidden = copy.deepcopy(new_map)
+    new_fleet = copy.deepcopy(fleet)
+    return new_map, new_map_hidden, new_fleet
 
-def game_instructions():
-    global MAP_HEIGHT, MAP_WIDTH, DEFAULT_FLEET, SHIP_SYMBOLS, DEFAULT_SYMBOL, INSTRUCTIONS, fleet_cpu, map_cpu_display
 
-    map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
-    fleet_cpu = copy.deepcopy(DEFAULT_FLEET)
-    cpu_deploy_all_ships()
+def game_instructions(height, width, symbol, fleet):
+
+    global SHIP_SYMBOLS, INSTRUCTIONS
+    # genetrating map and fleet, to be displayed on left side , on right side will be instrucions
+    tmp_map = create_map(height, width, symbol)
+    tmp_fleet = copy.deepcopy(fleet)
+    cpu_deploy_all_ships(tmp_map,tmp_fleet)
 
     while True:
-        print_map_and_list(map_cpu_display, INSTRUCTIONS, "MAP EXAMPLE", 10)
+        print_map_and_list(tmp_map, INSTRUCTIONS, "MAP EXAMPLE", 10)
         try:
             # Ask the user if they would like to adjust game settings
             changes = input().capitalize()
             # If the user opts to adjust settings
             if changes in ["Y", "YES"]:
-                modify_game_setttings()
+                modify_game_setttings(height, width, symbol, fleet)
                 continue
             else:
 
@@ -205,37 +213,36 @@ def game_instructions():
 # Game Adjust Settings functions
 #------------------------------
 
-def modify_game_setttings():
+def modify_game_setttings(height, width, symbol, fleet):
     """
     Adjust game settings, including the map and Battle Ships Fleet.
     This function offers the user a choice to modify the game map,
     modify existing ships, add new ships, or finish adjustments.
 
     Args:
-        fleet (dict): A dictionary containing fleet information.
 
     Returns:
         bool: True if the game adjustment was interrupted, False otherwise.
     """
 
     # Start an infinite loop to continuously offer adjustment options to the user
-    global MAP_HEIGHT, MAP_WIDTH, DEFAULT_FLEET, SHIP_SYMBOLS, DEFAULT_SYMBOL, GAME_ADJUST_MAIN, fleet_cpu, map_cpu_display, map_height_cpu, map_width_cpu
+    global  SHIP_SYMBOLS, GAME_ADJUST_MAIN
 
     while True:
-        print_fleet_with_coodinates(fleet_cpu)
-        fleet_cpu = copy.deepcopy(DEFAULT_FLEET) # resetting fleet so new ship alignment can be displayed
-        map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
-        cpu_deploy_all_ships()
+        # generating new map to display on left side
+        tmp_fleet = copy.deepcopy(fleet) # resetting fleet so new ship alignment can be displayed
+        tmp_map = create_map(height, width, symbol)
+        tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet)
         clear_terminal()
-        print_map_and_list(map_cpu_display, GAME_ADJUST_MAIN, "MAP EXAMPLE", )
+        print_map_and_list(tmp_map, GAME_ADJUST_MAIN, "MAP EXAMPLE", )
         try:
             user_input = input().capitalize()
             if not user_input:
                 print("Invalid input. Please type F, M, I, S, or 0 - tp return back to Instructions")
                 continue
             if user_input == "F":
-                modify_game_settings_fleet()
-                continue
+                new_fleet = modify_game_settings_fleet(height, width, symbol, fleet)
+
                 # adjust fleet
             elif user_input == "M":
                 print("M")
@@ -256,23 +263,18 @@ def modify_game_setttings():
 
 
 
-def modify_game_settings_fleet():
-    global DEFAULT_FLEET, fleet_cpu, map_cpu_display, fleet_player
-    clear_terminal()
-    fleet_cpu = copy.deepcopy(DEFAULT_FLEET) # reseting fleet so new ship alignmeent can be displayed
-    fleet_player = copy.deepcopy(DEFAULT_FLEET)  # creating fleet for player, i no success in fleet adjust, cpu_fleet will makee copy from this one, if success, cp_fleet will be coppied to player_fleet
-    map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
-    cpu_deploy_all_ships()
-    clear_terminal()
+def modify_game_settings_fleet(height, width, symbol, fleet):
+
+
     while True:
-        #clear_terminal()
+        clear_terminal()
         print("This is game DEFAULT fleet, if you want to modify ship ( ship size and quantity) or delete ship, pplease select ship by typing ship name or ship index and press enter")
         print("Example   Cruiser is index 3")
         print()
         print("If you want to add new ship, please type N and hit ENTER")
         print("To return to main Setings menu, please type 0 (zero) and press ENTER")
         print()
-        print_fleet(fleet_cpu)
+        print_fleet(fleet)
 
         try:
             user_input = input().capitalize()
@@ -282,110 +284,155 @@ def modify_game_settings_fleet():
                 continue
 
             elif user_input == "N":
-                print("uswer typed N")
+                print("user typed N")
                 # addd new ship code
-            elif user_input == "0":
-                return False
+
             elif user_input.isdigit():
+
                 index = int(user_input) - 1  # Convert to zero-based index
-                ship_names = list(fleet_cpu.keys())
+                ship_names = list(fleet.keys())
                 if 0 <= index < len(ship_names):
                     ship_name = ship_names[index]
+                elif user_input == "0":
+                    return fleet
                 else:
                     print("Invalid index. Please try again.")
                     continue
             else:
-                for ship_name_in_fleet in fleet_cpu.keys():
+                for ship_name_in_fleet in fleet.keys():
                     if user_input.lower() in ship_name_in_fleet.lower():
                         ship_name = ship_name_in_fleet
 
-            if ship_name in fleet_cpu:
-                # Display selected ship details and prompt for action
-                ship_size = fleet_cpu[ship_name]["Size"]
-                ship_qty = fleet_cpu[ship_name]["Quantity"]
-                #clear_terminal()
-                print(
-                    f"You have selected Ship \u001b[33m{ship_name}\u001b[0m  and it size is \u001b[33m{ship_size}\u001b[0m cells. There are \u001b[33m{ship_qty}\u001b[0m such ships in the current fleet.")
+            if ship_name in fleet:
+                changes = modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name)
+                if changes != False:
+                    fleet = changes
 
-                print("If you want to delete the ship, type 'D' and press enter.")
-                print("To change the ship SIZE and Quantity, enter 2 digits separated by a comma.")
-                print("Example: 2,1")
-                print("To go back, type 0 (zero).")
-
-                user_input = input().strip().upper()
-
-                # Handle empty input
-                if not user_input:
-                    print(
-                        "Invalid input. Please type something, not just press ENTER. If you want to ggo back, type 0 and press ENTER")
-                    continue
-
-                elif user_input == "D":
-                    del fleet_cpu[ship_name]
-                # Go back to ship selection
-                elif user_input == "0":
-                    continue
-
-                # Modify ship details
-                else:
-                    try:
-                        new_size, new_qty = map(int, user_input.split(","))
-                        if isinstance(new_size, int) and isinstance(new_qty, int):
-                            print(" testing new size and qty:", new_size, new_qty)
-                            fleet_cpu = copy.deepcopy(
-                                fleet_player)  # reseting fleet so new ship alignmeent can be displayed
-                            fleet_cpu[ship_name]["Size"] = new_size
-                            fleet_cpu[ship_name]["Quantity"] = new_qty
-                            check_result = game_adjust_check_if_fleet_fits_on_map()
-                            print("spausdinm rezultata", check_result)
-
-                            if check_result == False:
-                                fleet_cpu = copy.deepcopy(fleet_player)
-                                print("resultatas gryzo neigiamas")
-                                clear_terminal()
-                            else:
-                                print("check result is true")
-                                fleet_player[ship_name]["Size"] = new_size  # we will store all fleet changes that are passing validation on player ffleet
-                                fleet_player[ship_name]["Quantity"] = new_qty
-                    except ValueError:
-                        print("Values you have entered are not valid. Please enter 2 digits separated by a comma.")
 
                     # Handle empty input
-                if not user_input:
-                    print("Invalid input. Please enter a comma-separated pair of digits, or 0 to go back.")
-                    continue
-
-
-
+            if not user_input:
+                print("Invalid input. Please enter a comma-separated pair of digits, or 0 to go back.")
+                continue
         # Handle keyboard interrupt to gracefully exit the function
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False
 
 
-# Functions to check are Game setting adjustments valid
+
+def modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name):
+    # now we have ship name we want to adjust, lets try doing so:
+    ship_size = fleet[ship_name]["Size"]
+    ship_qty = fleet[ship_name]["Quantity"]
+    input_validation = True
+    check_result = True
+    while True:
+        try:
+            clear_terminal()
+            if not input_validation:
+                print(" len output text", len(output_text))
+                print(f'You have entered incorrect information')
+                if len(output_text) == 1:
+                    print(output_text)
+                else:
+                    for i in range(len(validated_user_input)):
+                        print(output_text[i])
+            if check_result == False:
+                print(f' I am sorry but i am strugling to fit given ship \u001b[33m{ship_name}\u001b[0m with size \u001b[33m{validated_user_input[0]}\u001b[0m and quantity \u001b[33m{validated_user_input[1]}\u001b[0m on fleet')
+            print(
+                f"You have selected Ship \u001b[33m{ship_name}\u001b[0m  and it size is \u001b[33m{ship_size}\u001b[0m cells. There are \u001b[33m{ship_qty}\u001b[0m such ships in the current fleet.")
+
+            print("If you want to delete the ship, type 'D' and press enter.")
+            print("To change the ship SIZE and Quantity, enter 2 digits separated by a comma.")
+            print("Example: 2,1")
+            print("To go back, type 0 (zero).")
+            user_input = input().strip().upper()
+            # Handle empty input
+            if not user_input:
+                print("Invalid input. Please type something, not just press ENTER. If you want to go back, type 0 and press ENTER")
+            elif user_input == "D":
+                del fleet[ship_name]
+                return fleet
+                # Go back to ship selection
+            elif user_input == "0":
+                return fleet
+            # Modify ship details
+            else:
+                # now we will validate user input
+                validation_result, validated_user_input, output_text = validate_user_input(user_input,2,"integer")
+                if validation_result == True:
+                    tmp_fleet = copy.deepcopy(fleet)
+                    tmp_map = create_map(height, width, symbol)
+                    tmp_fleet[ship_name]["Size"] = int(validated_user_input[0])
+                    tmp_fleet[ship_name]["Quantity"] = int(validated_user_input[1])
+
+                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet)
+                    if check_result == True:
+                        print("check result is true")
+                        fleet[ship_name]["Size"] = validated_user_input[0]
+                        fleet[ship_name]["Quantity"] = validated_user_input[1]
+                        return fleet
+                else:
+                    input_validation = False
+                    continue
+        except ValueError:
+                print("Values you have entered are not valid. Please enter 2 digits separated by a comma.")
+
+
+# Functions for checking and validating
 #------------------------------------------------------
 
-def game_adjust_check_if_fleet_fits_on_map():
+def game_adjust_check_if_fleet_fits_on_map(map, fleet):
     # Declare global variables accessed within the function
-    global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu
-    tmp_fleet = copy.deepcopy(fleet_cpu)
-    for i in range(10):
-        map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
-        fleet_cpu = copy.deepcopy(tmp_fleet)
-        print_fleet_with_coodinates(fleet_cpu)
+    for i in range(50): # will cycle 50 times, if there is any luck to deploy ships with curent configuration, loop will be interupted and returned True
+        tmp_fleet = copy.deepcopy(fleet)
         print("above should be fleet no coordinates")
-        result = cpu_deploy_all_ships()
-        print_map(map_cpu_display)
-        print_fleet_with_coodinates(fleet_cpu)
-        print(" check map ", i, " result from cpu deploy", result)
-
-        if result == True :
-            print("this is result:", result)
+        result = cpu_deploy_all_ships(map, tmp_fleet)
+        if result != False:
             return True
         else:
-            print("this is another not true result", result)
+            print("this is another not true result")
             return False
+
+
+def validate_user_input(input, parts, type=None):
+    """
+    Splits user input into the specified number of parts and optionally verifies their type.
+
+    Parameters:
+        input: The string input provided by the user.
+        parts: The number of parts to split the input into.
+        type: The expected type of each part (currently only 'integer' is supported).
+
+    Returns:
+        A tuple containing a validity flag, the parts if successful, and an output text list.
+    """
+
+    # Split the input by any non-alphanumeric character
+    split_input = re.split(r'\W+', input)
+
+    # Remove any empty strings from the list
+    split_input = [s for s in split_input if s]
+
+    input_valid = True  # Initialize validity flag
+    output_text = []  # Initialize output text list
+
+    # Check if the number of parts matches the expected number
+    if len(split_input) != parts:
+        output_text.append(f"Input should be split into \u001b[33m{parts}\u001b[0m parts.")
+        return False, tuple(split_input), output_text
+
+    # If a type is specified, validate each part
+    if type == 'integer':
+        for i, part in enumerate(split_input):
+            if not part.isdigit():
+                output_text.append(f'Your input \u001b[33m{part}\u001b[0m is NOT an Integer.')
+                input_valid = False  # Set validity flag to False if any part fails
+            else:
+                output_text.append(f'Your input \u001b[33m{part}\u001b[0m is an Integer.')
+                split_input[i] = int(part)
+
+    return input_valid, tuple(split_input), output_text
 
 
 
@@ -552,6 +599,9 @@ def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
 
 
 
+
+
+
 def print_map_and_list(map_left, instructions, label_left, gap=10):
     """
     Print a 2D map and a list side by side with labels and a customizable gap.
@@ -668,6 +718,7 @@ def map_allocate_empty_space_for_ship(game_map, coordinates_list):
         b_row, b_column = new_space
         if 0 <= b_row < len(game_map) and 0 <= b_column < len(game_map[0]):
             game_map[b_row][b_column] = SHIP_SYMBOLS["Miss"][0]
+    return game_map
 
 
 def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
@@ -691,18 +742,19 @@ def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
     # Use the global variable SHIP_SYMBOLS to get the ship symbols
     global SHIP_SYMBOLS
 
-    # Use the global variable GAPS_BETWEEN_MAPS to get Trye or False for ships NOT touching
+    # Use the global variable GAPS_BETWEEN_MAPS to get True or False for ships NOT touching
     global DEFAULT_GAPS_BETWEEN_MAPS
 
     # Before we start displaying ships on map, if spaces between ships is True, we will allocate blank space, then depliy ships
     if DEFAULT_GAPS_BETWEEN_MAPS == True:
-        map_allocate_empty_space_for_ship(game_map, coordinates_list)
+        game_map = map_allocate_empty_space_for_ship(game_map, coordinates_list)
 
 
     # Handle the case for single-cell ships
     if len(coordinates_list) == 1:
         row, column = coordinates_list[0]
         game_map[row][column] = SHIP_SYMBOLS[alignment][0]
+        return game_map
 
     # Handle the case for multi-cell ships
     else:
@@ -711,6 +763,7 @@ def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
         for cell in range(1,len(coordinates_list)):
             row, column = coordinates_list[cell]
             game_map[row][column] = SHIP_SYMBOLS[alignment][1]
+        return game_map
 
 
 def map_show_only_ships(game_map):
@@ -867,7 +920,7 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
     """
 
     # Declare global variables used in the function
-    global cpu_shot_log_tmp, DEFAULT_SYMBOL
+    global DEFAULT_SYMBOL
 
     # Initialize variables
     coordinates = ""
@@ -984,6 +1037,10 @@ def find_ship_and_coordinates(fleet, target_coordinates):
 
 
 
+
+
+
+
 def cpu_deploy_all_ships(game_map,fleet):
     """
     Deploy all CPU ships on the map.
@@ -1025,9 +1082,10 @@ def cpu_deploy_all_ships(game_map,fleet):
             # Handle single-cell ships separately
             if size == 1:
                 alignment = "Single"
-                location = random.choice(search_map_for_pattern(game_map, 1, 1))
-                if location == False:
+                result = search_map_for_pattern(game_map, 1, 1)
+                if result == False:
                     return False
+
             else:
                 # Randomly choose alignment for multi-cell ships
                 alignment = random.choice(["Horizontal", "Vertical"])
@@ -1035,34 +1093,41 @@ def cpu_deploy_all_ships(game_map,fleet):
 
                 # Find a suitable location based on the alignment
                 if alignment == "Vertical":
-                    location = random.choice(search_map_for_pattern(game_map, size, 1))
-                    #print("trying vetical", location, size)
-
-                    if len(location) < 2:
+                    result = search_map_for_pattern(game_map, size, 1)
+                    print("tomosius check ", alignment, result, size)
+                    if result == False: # if no cordinates possible were found with Vertical, we will try Horizontal
                         alignment = "Horizontal"
-                        location = random.choice(search_map_for_pattern(game_map, 1, size))
-                        #print("no luck vertical, trying horizontal", location, size)
-
-
+                        result = search_map_for_pattern(game_map, 1, size)
+                        print("tomosius check ", alignment, result, size)
+                        if result == False:
+                            return False
 
                 elif alignment == "Horizontal":
-                    location = random.choice(search_map_for_pattern(game_map, 1, size))
-                    #print("trying horizontal", location, size)
-
-                    #print(location)
-                    if len(location) < 2:
+                    result = search_map_for_pattern(game_map,1, size)
+                    print("tomosius check ", alignment, result, size)
+                    if result == False: # if no coordinates found with Horizontal, we will try Vertical
                         alignment = "Vertical"
-                        location = random.choice(search_map_for_pattern(game_map, size, 1))
-                        #print("no luck trying vertical", location, size)
+                        result = search_map_for_pattern(game_map, size, 1)
+                        print("tomosius check ", alignment, result, size)
+
+                        if result == False:
+
+                            return False
+            print("tomosius result111", result)
+            location = random.choice(result)
+            print("tomosius location222 ", location, alignment)
+
             if len(location) == 2:
                 # Deploy the ship at the chosen location
                 coordinates_list = create_coordinate_list(location[0],location[1], alignment, size)
                 map_show_ship_or_symbols(game_map, coordinates_list, alignment)
                 # append ship coordinates to fleet
                 fleet[ship_name]["Coordinates"].append(coordinates_list)
+                print_map(game_map)
             if len(location) < 2:
                 return False
     game_map = map_show_only_ships(game_map)
+    return game_map, fleet
 
 
 def handle_miss(player, row, column, map_hidden, map_display):
@@ -1107,7 +1172,7 @@ def handle_miss(player, row, column, map_hidden, map_display):
 
 
 
-def action_perform_shoot(player, row, column, map_hidden, map_display, fleet):
+def action_perform_shoot(player, row, column, map_hidden, map_display, fleet, cpu_shot_log_tmp):
     """
     Perform a shooting action on the game board.
     """
@@ -1123,7 +1188,7 @@ def action_perform_shoot(player, row, column, map_hidden, map_display, fleet):
 
             # Logic for handling ship hit
             handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
-                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id)
+                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id, cpu_shot_log_tmp)
             return "Hit"
 
         else:  # If no ship was found at the coordinates
@@ -1138,7 +1203,7 @@ def action_perform_shoot(player, row, column, map_hidden, map_display, fleet):
         return None
 
 def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
-                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id):
+                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, cpu_shot_log_tmp):
     """
     Handle the logic when a ship is hit.
 
@@ -1165,7 +1230,7 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
     """
 
     # Declare global variables for logging and timing
-    global game_actions_log, start_time, SHIP_SYMBOLS, cpu_shot_log_tmp
+    global game_actions_log, start_time, SHIP_SYMBOLS
 
     # Update the hidden map to indicate a hit
     map_hidden[row][column] = SHIP_SYMBOLS["Hit"][0]
@@ -1199,11 +1264,11 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
     if ship_sunk == True:
         alignment += "Sunk"
         print(player, " has sunk ", ship_name, " on coordinates :", row, column)
-        handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, map_display, map_hidden, alignment)
+        handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list, coordinates_set_id, coordinates_list_id, map_display, map_hidden, cpu_shot_log_tmp)
 
 
-def handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, map_display,
-                     map_hidden, alignment):
+def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list, coordinates_set_id, coordinates_list_id, map_display,
+                     map_hidden, cpu_shot_log_tmp):
     """
     Handle actions and updates for when a ship is sunk.
 
@@ -1227,7 +1292,7 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coor
     """
 
     # Declare global variables
-    global start_time, cpu_shot_log_tmp, SHIP_SYMBOLS, game_actions_log, game_result
+    global start_time, SHIP_SYMBOLS, game_actions_log, game_result
 
 
     print(" before updating map, i just want to see map_display, ship_size, coordinates_list[0], alignment, ship_name, fleet", ship_size, coordinates_list[0], alignment, ship_name, coordinates_list_id, coordinates_list)
@@ -1244,7 +1309,7 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, coordinates_list, coor
 
     # Update the CPU's temporary shot log if the player is the CPU
     if player == "CPU":
-        cpu_shot_log_tmp = update_cpu_shot_log(coordinates_list)
+        cpu_shot_log_tmp = update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp)
         print("after updating cpu shoot log", cpu_shot_log_tmp)
     print("now should follow coordinates removal")
     print(" jautiena remove coordinates from fleet ship name", ship_name, "coordinates set id: ", coordinates_set_id)
@@ -1298,7 +1363,7 @@ def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
         print(f"Failed to remove coordinates for {ship_name}.")
 
 
-def update_cpu_shot_log(coordinates_list):
+def update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp):
     """
     Update the CPU shot log by removing coordinates that are present in
     the provided coordinates_list, implying that a ship has been sunk.
@@ -1311,7 +1376,6 @@ def update_cpu_shot_log(coordinates_list):
     """
 
     # Declare global variable to access and modify CPU shot log
-    global cpu_shot_log_tmp
 
     # Exception handling to gracefully manage any runtime errors
     try:
@@ -1329,7 +1393,7 @@ def update_cpu_shot_log(coordinates_list):
 
 
 
-def find_first_ship_alignment(log):
+def find_first_ship_alignment(coordinates_list):
     """
     Attempts to identify the first alignment of a ship based on its coordinates,
     by comparing each coordinate with every other coordinate. Returns the index
@@ -1346,19 +1410,19 @@ def find_first_ship_alignment(log):
 
     # Handle the case where the log is empty
     # Return 'None' for both the alignment and index
-    if len(log) == 0:
+    if len(coordinates_list) == 0:
         return ('None', None)
 
     # Handle the case where there is only one coordinate in the log
     # In this case, the ship is considered 'Single'
-    elif len(log) == 1:
+    elif len(coordinates_list) == 1:
         print("based on spu log find_first_ship_alignment as single")
         return ('Single', 0)
 
     # Loop through each coordinate in the log for comparison
-    for i, (row1, column1) in enumerate(log):
+    for i, (row1, column1) in enumerate(coordinates_list):
         # Nested loop to compare the current coordinate with subsequent coordinates
-        for j, (row2, column2) in enumerate(log[i + 1:], start=i + 1):
+        for j, (row2, column2) in enumerate(coordinates_list[i + 1:], start=i + 1):
 
             # If the rows are the same across two coordinates, it's horizontally aligned
             if row1 == row2:
@@ -1375,7 +1439,7 @@ def find_first_ship_alignment(log):
     return ('None', None)
 
 
-def select_best_shot_based_on_alignment(map_to_search):
+def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
     """
     Chooses the best coordinates to shoot at based on ship alignment detection.
 
@@ -1391,7 +1455,7 @@ def select_best_shot_based_on_alignment(map_to_search):
                Returns (None, None) if no suitable coordinates are found.
     """
     # Access global variables
-    global cpu_shot_log_tmp, DEFAULT_SYMBOL
+    global DEFAULT_SYMBOL
 
     # Get the alignment and last index from the CPU shot log
     alignment_info = find_first_ship_alignment(cpu_shot_log_tmp)
@@ -1467,16 +1531,24 @@ def select_best_shot_based_on_alignment(map_to_search):
 
 
 
-def cpu_move():
+
+
+
+
+
+def cpu_move(fleet_target, map_target_hidden, map_target_display, cpu_shot_log_tmp):
     """
     Executes the CPU's move during the game.
+    Args:
+        - fleet_target: Dictionary holding information about the CPU's fleet.
+        - map_target_hidden: Hidden map for the CPU. here we perform search and shoot
+        - map_target_display: Display map for the CPU. if shoot is success, then display hit or miss
+        - cpu_shot_log_tmp: Temporary log for the CPU's shots.
+
 
     Global Variables:
     - game_result: Holds the current state of the game ("Game Over" or None).
-    - fleet_cpu: Dictionary holding information about the CPU's fleet.
-    - map_cpu_hidden: Hidden map for the CPU.
-    - map_cpu_display: Display map for the CPU.
-    - cpu_shot_log_tmp: Temporary log for the CPU's shots.
+
     - game_actions_log: Log for game actions.
     - start_time: Time when the game started.
     - SHIP_SYMBOLS: Dictionary holding symbols for different ship states.
@@ -1486,8 +1558,8 @@ def cpu_move():
     """
 
     # Declare global variables accessed within the function
-    global game_result, fleet_cpu, map_cpu_hidden, map_cpu_display
-    global cpu_shot_log_tmp, game_actions_log, start_time, SHIP_SYMBOLS
+    global game_result
+    global game_actions_log, start_time, SHIP_SYMBOLS
 
 
     # Identify the player as CPU for logging and action purposes
@@ -1497,17 +1569,17 @@ def cpu_move():
     if len(cpu_shot_log_tmp) == 0:
         print("No damaged ships in CPU's temporary log.")
         # If no damaged ships are found, choose coordinates based on the largest ship in the fleet
-        row, column = cpu_choose_shooting_coordinates_biggest_ship(fleet_cpu, map_cpu_hidden)
+        row, column = cpu_choose_shooting_coordinates_biggest_ship(fleet_target, map_target_hidden)
         # Perform the shooting action and update the game state
-        action_perform_shoot(player, row, column, map_cpu_hidden, map_cpu_display, fleet_cpu)
+        action_perform_shoot(player, row, column, map_target_hidden, map_target_display, fleet_target, cpu_shot_log_tmp)
 
         # Check for game over condition
     else:
         print(f"Damaged ships found in CPU's temporary log: {cpu_shot_log_tmp}")
         # If damaged ships are found, focus on sinking them by selecting the best shot based on ship alignment
-        row, column = select_best_shot_based_on_alignment(map_cpu_hidden)
+        row, column = select_best_shot_based_on_alignment(map_target_hidden, cpu_shot_log_tmp)
         # Perform the shooting action and update the game state
-        action_perform_shoot(player, row, column, map_cpu_hidden, map_cpu_display, fleet_cpu)
+        action_perform_shoot(player, row, column, map_target_hidden, map_target_display, fleet_target, cpu_shot_log_tmp)
 
 
 
@@ -1535,14 +1607,14 @@ def cpu_vs_cpu():
 
     # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
     clear_terminal()
-    map_cpu_display = create_map(10,10,DEFAULT_SYMBOL)
+    new_map_display = create_map(10,10,DEFAULT_SYMBOL)
     map_cpu_hidden = create_map(10,10,DEFAULT_SYMBOL)
-    fleet_cpu = {}
-    fleet_cpu = copy.deepcopy(DEFAULT_FLEET)
+    new_fleet = copy.deepcopy(DEFAULT_FLEET)
+    cpu_shot_log_tmp = []
 
 
     # Deploy all of CPU's ships (assuming the function 'cpu_deploy_all_ships' exists)
-    cpu_deploy_all_ships(map_cpu_display, fleet_cpu)
+    map_cpu_display , fleet_cpu = cpu_deploy_all_ships(new_map_display, new_fleet)
 
     # Print both maps to visualize initial game state
     print_two_maps(map_cpu_hidden, map_cpu_display, "hidden_cpu_map", "cpu_map")
@@ -1555,7 +1627,7 @@ def cpu_vs_cpu():
         print(f"\nGame turn {i} ******")
 
         # CPU makes its move
-        cpu_move()
+        cpu_move(fleet_cpu, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp)
 
         # Print the CPU's shot log and both maps to visualize game state
         print(f"CPU shooting actions log: {cpu_shot_log_tmp}")
@@ -1576,12 +1648,91 @@ def cpu_vs_cpu():
 
 
 def loop_cpu():
-    for i in range(500):
+    for i in range(50):
         fleet = cpu_vs_cpu()
         print("this is cpu vs cpu loop number ", i)
         if len(fleet) > 0:
             break
 
 #loop_cpu()
+
+
+# Run the game
+def battleship_game(height, width, symbol, fleet, start_time, game_action_log):
+    """
+    Main game loop for the CPU's Battleship game.
+
+    Global Variables:
+    - start_time: Time when the game started.
+    - map_cpu_hidden: Hidden map for the CPU.
+    - map_cpu_display: Display map for the CPU.
+    - cpu_shot_log_tmp: Temporary log for the CPU's shots.
+    - game_actions_log: Log for game actions.
+    - fleet_cpu: Dictionary holding information about the CPU's fleet.
+
+    Returns:
+    - None: Updates global variables and prints game state as side effects.
+    """
+
+    # Declare global variables accessed within the function
+    #global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu
+    map_cpu_display, map_cpu_hidden, fleet_cpu = create_initial_game_variables(height, width, symbol, fleet)
+
+
+
+    # Initialize the game start time
+    start_time = time.time()
+
+    # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
+    clear_terminal()
+
+    # Print ASCII art
+    #print_acid_effect()
+
+    # Initializing game instructions
+    adjust_game = game_instructions(height, width, symbol, fleet)
+
+
+
+battleship_game(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
+
+
+def tomosius_check():
+
+
+    # Declare global variables accessed within the function
+    global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu, DEFAULT_FLEET
+
+    # Initialize the game start time
+    start_time = time.time()
+
+    # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
+    clear_terminal()
+    new_map_display = create_map(10, 10, DEFAULT_SYMBOL)
+    map_cpu_hidden = create_map(10, 10, DEFAULT_SYMBOL)
+    new_fleet = copy.deepcopy(DEFAULT_FLEET)
+
+    # Deploy all of CPU's ships (assuming the function 'cpu_deploy_all_ships' exists)
+    result = cpu_deploy_all_ships(new_map_display, new_fleet)
+    if result == False:
+        print(" tomosius sunday can not deploy ships")
+    else:
+        map_cpu_display, fleet_cpu = result
+        # Print both maps to visualize initial game state
+        print_two_maps(map_cpu_hidden, map_cpu_display, "hidden_cpu_map", "cpu_map")
+
+        # Print the initial state of CPU's fleet
+        print_fleet_with_coodinates(fleet_cpu)
+
+
+
+
+
+tomosius_check()
+
+
+
+
+
 
 
