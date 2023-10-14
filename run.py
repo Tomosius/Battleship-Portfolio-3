@@ -249,10 +249,142 @@ def modify_game_setttings():
             elif user_input == "0":
                 return False
 
+        # Handle keyboard interrupt to gracefully exit the function
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False
+
+
+
+def modify_game_settings_fleet():
+    global DEFAULT_FLEET, fleet_cpu, map_cpu_display, fleet_player
+    clear_terminal()
+    fleet_cpu = copy.deepcopy(DEFAULT_FLEET) # reseting fleet so new ship alignmeent can be displayed
+    fleet_player = copy.deepcopy(DEFAULT_FLEET)  # creating fleet for player, i no success in fleet adjust, cpu_fleet will makee copy from this one, if success, cp_fleet will be coppied to player_fleet
+    map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
+    cpu_deploy_all_ships()
+    clear_terminal()
+    while True:
+        #clear_terminal()
+        print("This is game DEFAULT fleet, if you want to modify ship ( ship size and quantity) or delete ship, pplease select ship by typing ship name or ship index and press enter")
+        print("Example   Cruiser is index 3")
+        print()
+        print("If you want to add new ship, please type N and hit ENTER")
+        print("To return to main Setings menu, please type 0 (zero) and press ENTER")
+        print()
+        print_fleet(fleet_cpu)
+
+        try:
+            user_input = input().capitalize()
+
+            if not user_input:
+                print("Invalid input. Please enter a ship name, index, or 0 to go back.")
+                continue
+
+            elif user_input == "N":
+                print("uswer typed N")
+                # addd new ship code
+            elif user_input == "0":
+                return False
+            elif user_input.isdigit():
+                index = int(user_input) - 1  # Convert to zero-based index
+                ship_names = list(fleet_cpu.keys())
+                if 0 <= index < len(ship_names):
+                    ship_name = ship_names[index]
+                else:
+                    print("Invalid index. Please try again.")
+                    continue
+            else:
+                for ship_name_in_fleet in fleet_cpu.keys():
+                    if user_input.lower() in ship_name_in_fleet.lower():
+                        ship_name = ship_name_in_fleet
+
+            if ship_name in fleet_cpu:
+                # Display selected ship details and prompt for action
+                ship_size = fleet_cpu[ship_name]["Size"]
+                ship_qty = fleet_cpu[ship_name]["Quantity"]
+                #clear_terminal()
+                print(
+                    f"You have selected Ship \u001b[33m{ship_name}\u001b[0m  and it size is \u001b[33m{ship_size}\u001b[0m cells. There are \u001b[33m{ship_qty}\u001b[0m such ships in the current fleet.")
+
+                print("If you want to delete the ship, type 'D' and press enter.")
+                print("To change the ship SIZE and Quantity, enter 2 digits separated by a comma.")
+                print("Example: 2,1")
+                print("To go back, type 0 (zero).")
+
+                user_input = input().strip().upper()
+
+                # Handle empty input
+                if not user_input:
+                    print(
+                        "Invalid input. Please type something, not just press ENTER. If you want to ggo back, type 0 and press ENTER")
+                    continue
+
+                elif user_input == "D":
+                    del fleet_cpu[ship_name]
+                # Go back to ship selection
+                elif user_input == "0":
+                    continue
+
+                # Modify ship details
+                else:
+                    try:
+                        new_size, new_qty = map(int, user_input.split(","))
+                        if isinstance(new_size, int) and isinstance(new_qty, int):
+                            print(" testing new size and qty:", new_size, new_qty)
+                            fleet_cpu = copy.deepcopy(
+                                fleet_player)  # reseting fleet so new ship alignmeent can be displayed
+                            fleet_cpu[ship_name]["Size"] = new_size
+                            fleet_cpu[ship_name]["Quantity"] = new_qty
+                            check_result = check_map_ships_fitting()
+                            print("spausdinm rezultata", check_result)
+
+                            if check_result == False:
+                                fleet_cpu = copy.deepcopy(fleet_player)
+                                print("resultatas gryzo neigiamas")
+                                clear_terminal()
+                            else:
+                                print("check result is true")
+                                fleet_player[ship_name]["Size"] = new_size  # we will store all fleet changes that are passing validation on player ffleet
+                                fleet_player[ship_name]["Quantity"] = new_qty
+                    except ValueError:
+                        print("Values you have entered are not valid. Please enter 2 digits separated by a comma.")
+
+                    # Handle empty input
+                if not user_input:
+                    print("Invalid input. Please enter a comma-separated pair of digits, or 0 to go back.")
+                    continue
+
+
 
         # Handle keyboard interrupt to gracefully exit the function
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
+            return False
+
+
+# Functions to check are Game setting adjustments valid
+#------------------------------------------------------
+
+def check_map_ships_fitting():
+    # Declare global variables accessed within the function
+    global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu
+    tmp_fleet = copy.deepcopy(fleet_cpu)
+    for i in range(10):
+        map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
+        fleet_cpu = copy.deepcopy(tmp_fleet)
+        print_fleet_with_coodinates(fleet_cpu)
+        print("above should be fleet no coordinates")
+        result = cpu_deploy_all_ships()
+        print_map(map_cpu_display)
+        print_fleet_with_coodinates(fleet_cpu)
+        print(" check map ", i, " result from cpu deploy", result)
+
+        if result == True :
+            print("this is result:", result)
+            return True
+        else:
+            print("this is another not true result", result)
             return False
 
 
