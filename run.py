@@ -336,7 +336,7 @@ def modify_game_settings_fleet():
                                 fleet_player)  # reseting fleet so new ship alignmeent can be displayed
                             fleet_cpu[ship_name]["Size"] = new_size
                             fleet_cpu[ship_name]["Quantity"] = new_qty
-                            check_result = check_map_ships_fitting()
+                            check_result = game_adjust_check_if_fleet_fits_on_map()
                             print("spausdinm rezultata", check_result)
 
                             if check_result == False:
@@ -366,7 +366,7 @@ def modify_game_settings_fleet():
 # Functions to check are Game setting adjustments valid
 #------------------------------------------------------
 
-def check_map_ships_fitting():
+def game_adjust_check_if_fleet_fits_on_map():
     # Declare global variables accessed within the function
     global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu
     tmp_fleet = copy.deepcopy(fleet_cpu)
