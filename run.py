@@ -205,6 +205,57 @@ def game_instructions():
 # Game Adjust Settings functions
 #------------------------------
 
+def modify_game_setttings():
+    """
+    Adjust game settings, including the map and Battle Ships Fleet.
+    This function offers the user a choice to modify the game map,
+    modify existing ships, add new ships, or finish adjustments.
+
+    Args:
+        fleet (dict): A dictionary containing fleet information.
+
+    Returns:
+        bool: True if the game adjustment was interrupted, False otherwise.
+    """
+
+    # Start an infinite loop to continuously offer adjustment options to the user
+    global MAP_HEIGHT, MAP_WIDTH, DEFAULT_FLEET, SHIP_SYMBOLS, DEFAULT_SYMBOL, GAME_ADJUST_MAIN, fleet_cpu, map_cpu_display, map_height_cpu, map_width_cpu
+
+    while True:
+        print_fleet_with_coodinates(fleet_cpu)
+        fleet_cpu = copy.deepcopy(DEFAULT_FLEET) # resetting fleet so new ship alignment can be displayed
+        map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
+        cpu_deploy_all_ships()
+        clear_terminal()
+        print_map_and_list(map_cpu_display, GAME_ADJUST_MAIN, "MAP EXAMPLE", )
+        try:
+            user_input = input().capitalize()
+            if not user_input:
+                print("Invalid input. Please type F, M, I, S, or 0 - tp return back to Instructions")
+                continue
+            if user_input == "F":
+                modify_game_settings_fleet()
+                continue
+                # adjust fleet
+            elif user_input == "M":
+                print("M")
+                # adjust map
+            elif user_input == "I":
+                print("I")
+                # change indexes
+            elif user_input == "S":
+                print("S")
+                # user adjust row-column input type
+            elif user_input == "0":
+                return False
+
+
+        # Handle keyboard interrupt to gracefully exit the function
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False
+
+
 
 # Main Functions
 # --------------
