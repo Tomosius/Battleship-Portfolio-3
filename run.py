@@ -112,7 +112,8 @@ def clear_terminal():
     elif os.name == 'nt':  # Windows
         os.system('cls')
 
-
+# Game Intro functions
+#---------------------
 def print_acid_effect():
     """
     Prints a text art of an acid-like effect to the terminal.
@@ -174,6 +175,36 @@ wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 
 # Initial game start functions
 #-----------------------------
+
+def game_instructions():
+    global MAP_HEIGHT, MAP_WIDTH, DEFAULT_FLEET, SHIP_SYMBOLS, DEFAULT_SYMBOL, INSTRUCTIONS, fleet_cpu, map_cpu_display
+
+    map_cpu_display = create_map(MAP_HEIGHT, MAP_WIDTH, DEFAULT_SYMBOL)
+    fleet_cpu = copy.deepcopy(DEFAULT_FLEET)
+    cpu_deploy_all_ships()
+
+    while True:
+        print_map_and_list(map_cpu_display, INSTRUCTIONS, "MAP EXAMPLE", 10)
+        try:
+            # Ask the user if they would like to adjust game settings
+            changes = input().capitalize()
+            # If the user opts to adjust settings
+            if changes in ["Y", "YES"]:
+                modify_game_setttings()
+                continue
+            else:
+
+                return False
+
+        # Handle keyboard interrupt to gracefully exit the function
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False
+
+
+# Game Adjust Settings functions
+#------------------------------
+
 
 # Main Functions
 # --------------
