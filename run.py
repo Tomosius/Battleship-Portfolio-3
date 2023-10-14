@@ -198,7 +198,7 @@ def game_instructions(height, width, symbol, fleet):
             changes = input().capitalize()
             # If the user opts to adjust settings
             if changes in ["Y", "YES"]:
-                modify_game_setttings(height, width, symbol, fleet)
+                height, width, fleet = modify_game_setttings(height, width, symbol, fleet)
                 continue
             else:
 
@@ -227,8 +227,9 @@ def modify_game_setttings(height, width, symbol, fleet):
 
     # Start an infinite loop to continuously offer adjustment options to the user
     global  SHIP_SYMBOLS, GAME_ADJUST_MAIN
-
+    user_input = ""
     while True:
+
         # generating new map to display on left side
         tmp_fleet = copy.deepcopy(fleet) # resetting fleet so new ship alignment can be displayed
         tmp_map = create_map(height, width, symbol)
@@ -246,25 +247,64 @@ def modify_game_setttings(height, width, symbol, fleet):
                 # adjust fleet
             elif user_input == "M":
                 print("M")
-                # adjust map
+                height, width = modify_game_settings_map(height, width, symbol, fleet)
             elif user_input == "I":
                 print("I")
+                modify_game_settings_labels(height, width, symbol, fleet)
                 # change indexes
             elif user_input == "S":
                 print("S")
                 # user adjust row-column input type
             elif user_input == "0":
-                return False
+                return height, width, fleet
 
         # Handle keyboard interrupt to gracefully exit the function
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False
 
+def modify_game_settings_map(height, width, symbol, fleet):
+    input_values = [10,10]
+    input_validation = True
+    check_result = True
+    while True:
+        try:
+            clear_terminal()
+            if input_validation == False:
+                if len(input_values) !=2:
+                    print(f'You have entered just {len(input_values)} values, i require 2: Height and Width')
+                else:
+                    for i in range(len(input_values)):
+                        print(output_text[i])
+            if check_result == False:
+                print(f' Sorry but I believe you need bigger size of map for current fleet')
+
+            print(f'Current game map is {height} height and {width} wide. as you hhave selected to modify these parameters, please type height and width and press ENTER')
+            user_input = input()
+            input_validation, input_values, output_text = validate_user_input(user_input,2,"integer")
+            if input_validation == True: # user entered values are valid, now we check can we mae map with given fleet
+                tmp_map = create_map(int(input_values[0]),int(input_values[1]), symbol)
+                tmp_fleet = copy.deepcopy(fleet)
+                #testing if we can fir ships on givem map dimensions
+                check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map,tmp_fleet)
+                if check_result == True:
+                    height = int(input_values[0])
+                    width = int(input_values[1])
+                    return height, width
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False
+
+
+
+
+
+
+
+
 
 
 def modify_game_settings_fleet(height, width, symbol, fleet):
-
 
     while True:
         clear_terminal()
@@ -282,10 +322,17 @@ def modify_game_settings_fleet(height, width, symbol, fleet):
             if not user_input:
                 print("Invalid input. Please enter a ship name, index, or 0 to go back.")
                 continue
+            if len(user_input) == 1:
+                if user_input.capitalize() == "N":
+                    fleet = modify_game_settings_fleet_ad_new_ship(height, width, symbol, fleet)
+                elif user_input == "0":
+                    return
+                else:
+                    if ship_name in fleet:
+                        changes = modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name)
+                        if changes != False:
+                            fleet = changes
 
-            elif user_input == "N":
-                print("user typed N")
-                # addd new ship code
 
             elif user_input.isdigit():
 
@@ -303,10 +350,7 @@ def modify_game_settings_fleet(height, width, symbol, fleet):
                     if user_input.lower() in ship_name_in_fleet.lower():
                         ship_name = ship_name_in_fleet
 
-            if ship_name in fleet:
-                changes = modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name)
-                if changes != False:
-                    fleet = changes
+
 
 
                     # Handle empty input
@@ -318,6 +362,81 @@ def modify_game_settings_fleet(height, width, symbol, fleet):
             print("Game adjustment interrupted.")
             return False
 
+
+
+def modify_game_settings_fleet_ad_new_ship(height, width, symbol, fleet):
+    """
+    Modifies the game settings by adding a new ship to the fleet.
+
+    Parameters:
+        height (int): The height of the game map.
+        width (int): The width of the game map.
+        symbol (str): The symbol used to represent ships.
+        fleet (dict): The current state of the fleet.
+
+    Returns:
+        height, width (tuple): The new dimensions of the game map.
+    """
+    validated_user_input_1 = ["ShipName","Size","QTY"]
+    check_result = True
+    while True:
+        try:
+            # Clear the terminal (clear_terminal function not shown here)
+            clear_terminal()
+
+            # Check if the user entered 3 values for the ship
+            if len(validated_user_input_1) != 3:
+                print(
+                    f'Please make sure you have entered 3 values, as at the moment I can see only {len(validated_user_input_1)} values.')
+
+            # Show the current fleet
+            print("This is your current fleet:")
+            print_fleet(fleet)
+
+            # If the previous check failed, inform the user
+            if check_result == False:
+                print(
+                    f'I cannot squeeze in new ship {validated_user_input_1[0]} with width {validated_user_input_2[0]} and size {validated_user_input_2[1]} into the current fleet.')
+                print(
+                    'Because such a new fleet is not rational for the given map size. Try increasing the map size, and then add this ship again.')
+
+            # Get the user input for the new ship
+            user_input = input("Please enter Ship name, size, and quantity of ships you want to add to the fleet: ")
+            if user_input == "0":
+                return fleet
+            validation_result_1, validated_user_input_1, output_text_1 = validate_user_input(user_input, 3)
+
+            if validation_result_1:
+                # Validate if the last two parts are integers
+                new_input = f"{validated_user_input_1[1]},{validated_user_input_1[2]}"
+                validation_result_2, validated_user_input_2, output_text_2 = validate_user_input(new_input, 2,
+                                                                                                 "integer")
+
+                if validation_result_2:
+                    # Create a temporary copy of the fleet and map
+                    tmp_fleet = copy.deepcopy(fleet)
+                    tmp_map = create_map(height, width, symbol)
+
+                    # Add the new ship to the temporary fleet
+                    tmp_fleet[validated_user_input_1[0]] = {"Size": int(validated_user_input_2[0]),
+                                                            "Quantity": int(validated_user_input_2[1]),
+                                                            "Coordinates": []}
+
+                    # Check if the new fleet fits on the map
+                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet)
+
+                    if check_result:
+                        # Update the actual fleet with the new ship
+                        fleet[validated_user_input_1[0]] = {"Size": int(validated_user_input_2[0]),
+                                                            "Quantity": int(validated_user_input_2[1]),
+                                                            "Coordinates": []}
+                        return fleet
+
+        except ValueError:
+            print("Values you have entered are not valid. Please enter the correct number of values.")
+
+
+# You would also need the clear_terminal(), print_fleet(), create_map(), and game_adjust_check_if_fleet_fits_on_map() functions, which are not shown here.
 
 
 def modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name):
@@ -1094,28 +1213,22 @@ def cpu_deploy_all_ships(game_map,fleet):
                 # Find a suitable location based on the alignment
                 if alignment == "Vertical":
                     result = search_map_for_pattern(game_map, size, 1)
-                    print("tomosius check ", alignment, result, size)
                     if result == False: # if no cordinates possible were found with Vertical, we will try Horizontal
                         alignment = "Horizontal"
                         result = search_map_for_pattern(game_map, 1, size)
-                        print("tomosius check ", alignment, result, size)
                         if result == False:
                             return False
 
                 elif alignment == "Horizontal":
                     result = search_map_for_pattern(game_map,1, size)
-                    print("tomosius check ", alignment, result, size)
                     if result == False: # if no coordinates found with Horizontal, we will try Vertical
                         alignment = "Vertical"
                         result = search_map_for_pattern(game_map, size, 1)
-                        print("tomosius check ", alignment, result, size)
 
                         if result == False:
 
                             return False
-            print("tomosius result111", result)
             location = random.choice(result)
-            print("tomosius location222 ", location, alignment)
 
             if len(location) == 2:
                 # Deploy the ship at the chosen location
@@ -1123,7 +1236,6 @@ def cpu_deploy_all_ships(game_map,fleet):
                 map_show_ship_or_symbols(game_map, coordinates_list, alignment)
                 # append ship coordinates to fleet
                 fleet[ship_name]["Coordinates"].append(coordinates_list)
-                print_map(game_map)
             if len(location) < 2:
                 return False
     game_map = map_show_only_ships(game_map)
