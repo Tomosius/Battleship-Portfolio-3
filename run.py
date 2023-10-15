@@ -65,10 +65,10 @@ SHIP_SYMBOLS = {
 DEFAULT_FLEET = {
     "AircraftCarrier": {"Size": 5, "Quantity": 1, "Coordinates": []},
     "Battleship": {"Size": 4, "Quantity":1, "Coordinates": []},
-    "Cruiser": {"Size": 3, "Quantity": 2, "Coordinates": []},
+    "Cruiser": {"Size": 3, "Quantity": 1, "Coordinates": []},
     "Submarine": {"Size": 3, "Quantity":1, "Coordinates": []},
     "Destroyer": {"Size": 2, "Quantity": 2, "Coordinates": []},
-    "Tugboat": {"Size": 1, "Quantity": 4, "Coordinates": []}
+    "Tugboat": {"Size": 1, "Quantity": 3, "Coordinates": []}
 }
 
 
@@ -106,8 +106,8 @@ def clear_terminal():
     elif os.name == 'nt':  # Windows
         os.system('cls')
 
-# Game Intro functions
-#---------------------
+"""Game Intro functions
+---------------------"""
 def print_acid_effect():
     """
     Prints a text art of an acid-like effect to the terminal.
@@ -167,8 +167,8 @@ wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
     clear_terminal()
 
 
-# Initial game start functions
-#-----------------------------
+"""Initial game start functions
+-----------------------------"""
 
 
 def create_initial_game_variables(height, width, symbol, fleet):
@@ -202,9 +202,6 @@ def create_initial_game_variables(height, width, symbol, fleet):
 
     # Return the newly created game variables as a tuple.
     return new_map, new_map_hidden, new_fleet
-
-
-import copy  # Import the copy module for deep copy operations
 
 
 def game_instructions():
@@ -266,11 +263,8 @@ def game_instructions():
             print("Game adjustment interrupted.")
             return False  # Return False to indicate interruption
 
-#Game Adjust Settings functions
-#------------------------------
-
-import copy  # Import the copy module for deep copy operations
-
+"""Game Adjust Settings functions
+------------------------------"""
 
 def modify_game_settings(height, width, fleet, gaps_on_map):
     """
@@ -343,7 +337,6 @@ def modify_game_settings(height, width, fleet, gaps_on_map):
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False  # Return False to indicate interruption
-
 
 
 def modify_game_settings_gaps(height, width, fleet, gaps_on_map):
@@ -536,18 +529,12 @@ def modify_game_settings_map(height, width, fleet, gaps_on_map):
             if not input_validation:
                 if len(input_values) != 2:
                     print(f'You have entered just {len(input_values)} values, I require 2: Height and Width.')
-                else:
-                    for i in range(len(input_values)):
-                        print(output_text[i])
+                    input_validation = True # Reseting validation
 
-            # Check if the fleet doesn't fit on the map and display a warning
-            if not check_result:
+            if not check_result: # Check if the fleet doesn't fit on the map and display a warning
+
                 print('Sorry, but I believe you need a bigger map for the current fleet.')
-
-            # Resetting values:
-            input_values = [10, 10]  # Initialize the list to store the user input values
-            input_validation = True  # Initialize input validation flag
-            check_result = True  # Initialize a flag to check if the fleet fits on the map
+                check_result = True # Reseting back to True
 
             # Take user input
             user_input = input()
@@ -587,7 +574,6 @@ def modify_game_settings_map(height, width, fleet, gaps_on_map):
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False  # Return False to indicate that the adjustment was interrupted
-
 
 
 def modify_game_settings_fleet(height, width, fleet, gaps_on_map):
@@ -697,7 +683,6 @@ def find_closest_ship_name(user_input, fleet):
     return closest_match
 
 
-
 def modify_game_settings_fleet_add_new_ship(height, width, fleet, gaps_on_map):
     """
     Allows the user to add a new ship to the fleet.
@@ -742,14 +727,12 @@ def modify_game_settings_fleet_add_new_ship(height, width, fleet, gaps_on_map):
                 print(f'Please make sure you have entered 3 values; currently, I see only {len(validated_user_input_1)} values.')
 
             # Inform the user if the new ship cannot fit on the map
+            validated_user_input_2 = ""
             if not check_result:
-                print(f'Cannot fit the new ship {validated_user_input_1[0]} with size {validated_user_input_2[0]} and quantity {validated_user_input_2[1]} into the current fleet.')
+                print(f'Cannot fit the new ship {validated_user_input_1[0]} with size {validated_user_input_2[0]} and '
+                      f'quantity {validated_user_input_2[1]} into the current fleet.')
                 print('Consider increasing the map size before adding this new ship.')
-
-            # Resetiing  variables for user input validation and fleet fitting check
-            validated_user_input_1 = ["ShipName", "Size", "QTY"]
-            check_result = True
-
+                check_result = True
 
             # Capture the user's input for the new ship
             user_input = input("Please enter the Ship name, size, and quantity of ships you want to add to the fleet: ")
@@ -817,7 +800,8 @@ def modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, sh
     ship_qty = fleet[ship_name]["Quantity"]
     input_validation = True
     check_result = True
-
+    validated_user_input = ''
+    output_text = ""
     # Start an infinite loop for user interaction
     while True:
 
@@ -838,15 +822,12 @@ def modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, sh
             # Display validation and fitting errors, if any
             if not input_validation:
                 print("You have entered incorrect information.")
-                for i in range(len(validated_user_input)):
-                    print(output_text[i])
+                print(output_text[0])
+                input_validation = True  #Reseting value
 
             if not check_result:
                 print(f'Cannot fit the ship {ship_name} with size {validated_user_input[0]} and quantity {validated_user_input[1]} into the current fleet.')
-
-            # Reseting Validations
-            input_validation = True
-            check_result = True
+                check_result = True  # Resetting value
 
             # Display current ship details
             print(f"You have selected the ship {ship_name}. It has a size of {ship_size} cells and there are {ship_qty} such ships in the current fleet.")
@@ -886,8 +867,8 @@ def modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, sh
             print("Invalid input. Please enter size and quantity as two digits separated by a comma.")
 
 
-# Functions for checking and validating
-#--------------------------------------
+"""Functions for checking and validating
+--------------------------------------"""
 
 
 def game_adjust_check_if_fleet_fits_on_map(map, fleet, gaps_on_map):
@@ -916,13 +897,12 @@ def game_adjust_check_if_fleet_fits_on_map(map, fleet, gaps_on_map):
         result = cpu_deploy_all_ships(map, tmp_fleet, gaps_on_map)
 
         # If deployment was successful, break the loop and return True
-        if result != False:
-            return True
+        if not result :
+            return result
 
     # If we've gone through all 50 attempts without success, return False
     print("Unable to fit the fleet on the map after 50 attempts.")
-    return False
-
+    return True
 
 
 def validate_user_input(input_str, parts, type=None):
@@ -952,7 +932,7 @@ def validate_user_input(input_str, parts, type=None):
 
     # Check if the number of parts obtained from the split operation matches the expected number of parts
     if len(split_input) != parts:
-        output_text.append(f"Input should be split into {parts} parts.")
+        output_text.append(f'Input should be split into {parts} parts.')
         return False, tuple(split_input), output_text
 
     # If a specific data type is expected for each part, perform type validation
@@ -971,9 +951,8 @@ def validate_user_input(input_str, parts, type=None):
     return input_valid, tuple(split_input), output_text
 
 
-
-# Main Functions
-# --------------
+"""Main Functions
+--------------"""
 
 def create_map(width, height, symbol):
     """
@@ -989,10 +968,8 @@ def create_map(width, height, symbol):
     """
     return [[symbol for _ in range(height)] for _ in range(width)]
 
-# Print functions
-#----------------
-
-
+"""Print functions
+----------------"""
 
 def print_fleet(fleet):
     """Print the fleet information in a formatted manner.
@@ -1069,72 +1046,74 @@ def print_map(game_map):
 
 def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
     """
-    Prints two 2D maps side by side with labels and a customizable gap.
+    Print two 2D maps side by side with labels and a customizable gap.
 
     Args:
         map_left (list): A 2D list representing the first map.
         map_right (list): A 2D list representing the second map.
         label_left (str): Label for the first map.
         label_right (str): Label for the second map.
-        gap (int): Number of blank spaces between the two maps.
-        label_row (list): List of labels for row indices.
-        label_column (list): List of labels for column indices.
-
+        gap (int): Number of blank spaces between the two maps. Default is 10.
     """
-    # Global variables for row and column indexes
-    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
 
-    # Define character dimensions and formatting
-    char_width = len("X")  # Assuming all characters have the same width
+    # Constants for character dimensions and formatting
+    char_width = len("X")  # Width of a single character (assuming monospaced font)
 
     # Calculate the maximum number of digits in row and column indices
     num_digits_map_width = len(str(len(map_left[0])))
     num_digits_map_height = len(str(len(map_left)))
 
-    # Create a string filled with blank spaces to act as a gap between the two maps
+    # Create a string of blank spaces for the gap between maps
     gap_str = ' ' * gap
 
-    # Calculate the offset for the row indices, to align them with the map data
+    # Calculate the left-side offset for aligning map and row indices
     row_index_separator = " | "
     print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
 
-    # Center-align the map labels based on the total character width of each map
-    total_char_width = len(map_left[0]) * (num_digits_map_width + char_width + 1)
-    label_left_centered = label_left.center(total_char_width)
-    label_right_centered = label_right.center(total_char_width)
+    # Center-align the labels for both maps
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
+    label_left_centered = label_left.center(number_char_table_total)
+    label_right_centered = label_right.center(number_char_table_total)
 
-    # Print the labels for both maps
+    # Print the centered labels for both maps
     print(f"{print_map_left_offset}{label_left_centered}{gap_str}{print_map_left_offset} {label_right_centered}")
 
-    # Print column indices for both maps
+    # Print column headers for both maps
     print(print_map_left_offset, end=" ")
     for col_index in range(len(map_left[0])):
-        # Right-align the column indices and print them without a trailing space for the last index
-        print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width),
-              end=" " if col_index != len(map_left[0]) - 1 else "")
+        if col_index == len(map_left[0]) - 1:  # Check if it's the last column index
+            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width),
+                  end="")  # i do not want gap after last index, as it will be not aligned
+        else:
+            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
     print(gap_str, print_map_left_offset, end=" ")
     for col_index in range(len(map_right[0])):
+        # Right-justify the column index with proper spacing
         print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
     print()
-
-    # Print the horizontal separator line for both maps
+    # Print the horizontal separator line
+    # This step prints a separator line to visually separate the maps
     separator_length_left = len(map_left[0]) * (num_digits_map_width + char_width + 1)
     separator_length_right = len(map_right[0]) * (num_digits_map_width + char_width + 1)
     print(print_map_left_offset + "=" * separator_length_left, end=gap_str)
     print(" " + print_map_left_offset + "=" * separator_length_right)
 
-    # Print the actual map data for both maps
+    # Loop through each row to print map values
     for row_index, (row_left, row_right) in enumerate(zip(map_left, map_right)):
-        # Printing the left map
+        # Print row for the left map
         print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_left:
-            print(f"{value}".rjust(num_digits_map_height + char_width), end=" ")
-        # Insert gap between maps
+            width = len(str(value))
+            # Right-justify the map value with proper spacing
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+        # Insert the gap between the two maps
         print(gap_str, end="")
-        # Printing the right map
+        # Print row for the right map
         print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_right:
-            print(f"{value}".rjust(num_digits_map_height + char_width), end=" ")
+            width = len(str(value))
+            # Right-justify the map value with proper spacing
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
         # Move to the next line
         print()
 
@@ -1315,8 +1294,8 @@ def print_aligned_log(log_data, gap=10):
     # No return statement is needed as the function prints directly to the console
 
 
-# User Game Play Functions
-#-------------------------
+"""User Game Play Functions
+-------------------------"""
 
 
 def player_shoot_input(map_display, map_hidden, enemy_fleet):
@@ -1329,7 +1308,9 @@ def player_shoot_input(map_display, map_hidden, enemy_fleet):
         enemy_fleet (dict): The enemy fleet's information.
 
     Returns:
-        None: The function prints the game state and updates it in-place.
+        - fleet_target: Dictionary holding information about the CPU's fleet.
+        - map_hidden: Hidden map here we perform search and shoot
+        - map_display: Display map if shoot is success, then display hit or miss
     """
 
     # Global variables for row and column indexes and the CPU's shot log
@@ -1338,20 +1319,23 @@ def player_shoot_input(map_display, map_hidden, enemy_fleet):
     # Flag to track whether the user's input is valid
     input_validation = True
     coordinate_value_correct = True
-
+    coordinate_return_message = ""
+    row = ""
+    column = ""
+    input_values = ""
     while True:
         try:
             # If the last input was invalid, print an error message
-            if input_validation == False:
+            if not input_validation:
                 print(f' Please enter JUST 2 values, as you have entered {len(input_values)}')
-            if coordinate_value_correct == False:
+                input_validation = True # Resetting validation
+            if not coordinate_value_correct:
                 print(coordinate_return_message)
+                coordinate_value_correct = True # Resetting validation
 
             # Prompt the user for coordinates to shoot at
             print(f'Please enter coordinates to shoot, Row and Column, in this pattern')
 
-            # Resweting Flag to track whether the user's input is valid
-            input_validation = True
             user_input = input()
 
             # Validate the user's input to ensure it contains exactly two values
@@ -1377,7 +1361,8 @@ def player_shoot_input(map_display, map_hidden, enemy_fleet):
                 column_value_correct = False
                 column_return_message = f'There is no such Column on current map with index {input_column}'
 
-            # Now we will add both validation, and if both are true, cdde will continu, otherwise it will trigger error and print out
+            # Now we will add both validation, and if both are true, code will continue, otherwise it will trigger
+            # error and print out
             coordinate_value_correct = row_value_correct and column_value_correct
 
             # Creating return message if it needs to be printed out
@@ -1388,19 +1373,23 @@ def player_shoot_input(map_display, map_hidden, enemy_fleet):
 
 
             # If the input is valid
-            if coordinate_value_correct == True:
-
+            if coordinate_value_correct:
                 if row in MAP_ROW_INDEXES:
                     row_index = MAP_ROW_INDEXES.index(row)
                     column_index = MAP_COLUMN_INDEXES.index(column)
+                    coordinates_check = ""
 
                     # Check if the coordinates are already shot at
                     coordinates_check = player_shoot_coordinates_check(row_index, column_index, map_hidden)
 
             # If the coordinates are valid and haven't been shot at, perform the shooting action
-            if coordinates_check == True:
-                action_perform_shoot("Player", row_index, column_index, map_display, map_hidden, enemy_fleet,
+            if coordinates_check:
+                map_hidden, map_display, fleet = action_perform_shoot("Player", row_index, column_index, map_display, map_hidden, enemy_fleet,
                                      cpu_shot_log_tmp)
+                return map_hidden, map_display, fleet
+            else:
+                coordinate_value_correct = False
+                coordinate_return_message = f'Sorry but you have already used these coordinates'
 
         # Handle keyboard interrupts to exit the game gracefully
         except KeyboardInterrupt:
@@ -1408,7 +1397,7 @@ def player_shoot_input(map_display, map_hidden, enemy_fleet):
             return False
 
 
-def player_shoot_coordinates_check(row, column, gam_map):
+def player_shoot_coordinates_check(row, column, game_map):
     """
     Checks if the provided coordinates have already been targeted.
 
@@ -1428,17 +1417,13 @@ def player_shoot_coordinates_check(row, column, gam_map):
     check_result = True
 
     # Check if the coordinate on the game map is the default symbol (meaning not yet targeted)
-    if gam_map[row][column] == DEFAULT_SYMBOL:
+    if game_map[row][column] == DEFAULT_SYMBOL:
         check_result = True
 
     # Loop through the game action logs to see if this coordinate has already been targeted
     for log in game_actions_log:
-        if row == log[3] and column == log[4]:
+        if int(row) == log[2] and int(column) == log[3]:
             check_result = False  # Set result flag to False if coordinate has been targeted
-
-    # Print a message if the player is allowed to shoot at this coordinate
-    if check_result == True:
-        print("player move to shoot")
 
     return check_result  # Return the result flag
 
@@ -1451,7 +1436,7 @@ def player_deploy_all_ships(map_display, map_hidden, fleet, gaps_on_map):
         map_display (list): The 2D array representing the display map.
         map_hidden (list): The 2D array representing the hidden map.
         fleet (dict): A dictionary containing the details of the fleet.
-        gamps_on_map (int): The gaps between ships on the map.
+        gaps_on_map (bool): The gaps between ships on the map.
 
     Returns:
         tuple: Updated map_display and fleet dictionary with deployed ship coordinates.
@@ -1514,7 +1499,8 @@ def player_deploy_single_ship(map_display, map_hidden, ship_name, ship_size, gap
 
             # Display error messages based on the flags
             if not input_validation:
-                print(output_values_message)
+                for message in output_values_message:
+                    print(message)
             if not coordinate_value_correct:
                 print(coordinate_return_message)
             if not alignment_value_correct:
@@ -1542,18 +1528,21 @@ def player_deploy_single_ship(map_display, map_hidden, ship_name, ship_size, gap
                 # If ship size is more then 1 cell, we neet to validate, it is 3 values entered
                 elif ship_size > 1:
                     input_validation, input_values, output_values_message = validate_user_input(user_input, 3)
-                    # Now we check if last 3rd value is letter and is it Vertical or Horizontal, coordinates we will check below
-                    alignment_text = input_values[2]
+                    if input_validation:
+                        # Now we check if last 3rd value is letter and is it Vertical or Horizontal, coordinates we will check below
+                        alignment_text = input_values[2]
 
-                    # If user entered just one letter, we will try to get alignment
-                    if alignment_text.lower() == "v":
-                        alignment = "Vertical"
-                    elif alignment_text.lower() == "h":
-                            alignment = "Horizontal"
+                        # If user entered just one letter, we will try to get alignment
+                        if alignment_text.lower() == "v":
+                            alignment = "Vertical"
+                        elif alignment_text.lower() == "h":
+                                alignment = "Horizontal"
 
-                    # If alignment can not be detected, or it is complicated string:
+                        # If alignment can not be detected, or it is complicated string:
+                        else:
+                            alignment_value_correct, alignment, alignment_mistake_message = user_input_detect_alignment(alignment_text)
                     else:
-                        alignment_value_correct, alignment, alignment_mistake_message = user_input_detect_alignment(alignment_text)
+                        continue
 
             # Alignment is sorted, now we check coordinates:
             # Determine the correct input type based on MAP_ROW_INDEXES and MAP_COLUMN_INDEXES.
@@ -1713,8 +1702,6 @@ def user_input_detect_alignment(alignment_text):
     vertical_string = 'vertical'
     horizontal_string = 'horizontal'
 
-
-
     # Normalize the user input for easier comparison
     normalized_alignment = alignment_text.lower()
 
@@ -1796,7 +1783,6 @@ def levenshtein_distance(source_word, target_word):
 
         # Update the list of distances.
         distances = new_distances
-    print("leven distances", distances[-1], "source:", source_word, "target", target_word)
     return distances[-1]  # The last element is the Levenshtein distance between the two full words.
 
 
@@ -1834,15 +1820,15 @@ def player_deploy_single_ship_check_map_space(game_map, coordinates_list):
                 message_text = ""
         else:
             checking_ship_fits_on_map = False
-            message_text = f' sorry but with given coordinates, this part of ship {row}, {column} will be out of map boundaries'
+            message_text = f' sorry but with given coordinates, this part of ship [{row}, {column}] will be out of map boundaries'
 
     # If the loop completes, the ship fits and the function will return True
     return checking_ship_fits_on_map, message_text
 
 
 
-# Map manipulating functions
-#---------------------------
+"""Map manipulating functions
+---------------------------"""
 
 
 def create_coordinate_list(row, column, alignment, ship_size):
@@ -1882,7 +1868,6 @@ def create_coordinate_list(row, column, alignment, ship_size):
                 coordinates_list.append([row + cell, column])
 
     return coordinates_list
-
 
 
 def map_allocate_empty_space_for_ship(game_map, coordinates_list):
@@ -2012,10 +1997,8 @@ def map_show_only_ships(game_map):
     return game_map
 
 
-
-# Game logic functions:
-#----------------------
-
+""" Game logic functions:
+----------------------"""
 
 def search_map_for_pattern(game_map, height, width):
     """
@@ -2098,9 +2081,6 @@ def find_biggest_ship_in_fleet(fleet):
     # Retrieve the size of the biggest ship
     biggest_ship_size = available_ships[biggest_ship]["Size"]
 
-    # Print the name and size of the biggest ship for debugging purposes
-    print(f"Biggest ship: {biggest_ship}, Size: {biggest_ship_size}")
-
     # Return a tuple containing the name and size of the biggest ship
     return biggest_ship, biggest_ship_size
 
@@ -2128,13 +2108,8 @@ def map_search_reduce_width(height, width, game_map):
     # Search for the pattern with the new dimensions
     coordinates = search_map_for_pattern(game_map, height, width)
 
-    # Debugging information
-    print(f"map_search_reduce_width was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
-
     # If no coordinates were found
-    if coordinates == False:
-        print(f"we have found no coordinates with height and width: {height}, {width}")
-
+    if not coordinates:
         # Restore the width back to the original value
         width += 1
         # Decrease the height by 1
@@ -2143,12 +2118,8 @@ def map_search_reduce_width(height, width, game_map):
         # Search for the pattern again with the new dimensions
         coordinates = search_map_for_pattern(game_map, height, width)
 
-        # Debugging information
-        print(f"map_search_reduce_width was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
-
         # If still no coordinates were found
-        if coordinates == False:
-            print(f"we have found no coordinates with height and width: {height}, {width}")
+        if not coordinates:
             # Now reduce both height and width by 1
             width -= 1
 
@@ -2178,12 +2149,8 @@ def map_search_reduce_height(height, width, game_map):
     # Search for the pattern with the new dimensions
     coordinates = search_map_for_pattern(game_map, height, width)
 
-    # Debugging information
-    print(f"map_search_reduce_height was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
-
     # If no coordinates were found
-    if coordinates == False:
-        print(f"we have found no coordinates with height and width: {height}, {width}")
+    if not coordinates:
 
         # Restore the height back to the original value
         height += 1
@@ -2193,12 +2160,8 @@ def map_search_reduce_height(height, width, game_map):
         # Search for the pattern again with the new dimensions
         coordinates = search_map_for_pattern(game_map, height, width)
 
-        # Debugging information
-        print(f"map_search_reduce_height was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
-
         # If still no coordinates were found
-        if coordinates == False:
-            print(f"we have found no coordinates with height and width: {height}, {width}")
+        if not coordinates:
             # Now reduce both height and width by 1
             height -= 1
 
@@ -2220,11 +2183,9 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
     """
 
     # Declare global variables used in the function
-    global DEFAULT_SYMBOL
+    global DEFAULT_SYMBOL, game_result
 
     # Initialize variables
-    coordinates = ""
-    height = ""
     width = ""
 
     # Find the biggest ship in the fleet
@@ -2232,7 +2193,7 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
     # Check if there are any ships left in the fleet
     if ship_name is None:
-        print("game over print")  # No ships left, game over
+        game_result = False
     else:
         # Calculate the initial pattern dimensions based on the biggest ship
         width = ship_size * 2 - 1
@@ -2242,22 +2203,18 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
         coordinates = search_map_for_pattern(game_map, height, width)
 
         # If no suitable coordinates are found, enter a loop to adjust the pattern
-        if coordinates == False:
-            while coordinates == False:
+        if not coordinates:
+            while not coordinates:
 
                 # Try searching again with the current pattern dimensions
                 coordinates = search_map_for_pattern(game_map, height, width)
 
                 # Break the loop if coordinates are found
-                if coordinates != False:
-                    print("cpu_choose_shooting_coordinates_biggest_ship found coordinates", coordinates)
+                if coordinates:
                     break
 
                 # Randomly choose which dimension to reduce
                 reduction = random.choice(["height", "width"])
-
-                # Log the current unsuccessful dimensions
-                print("we have found no coordinates with height and width:", height, width)
 
                 # Reduce the height and search again
                 if reduction == "height":
@@ -2269,7 +2226,6 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
                 # Various exit conditions for the loop
                 if (height < ship_size and width <= 1) or (height <= 1 and width < ship_size) or (height < 1 or width < 1):
-                    print("we have found no coordinates with height and width:", height, width)
                     break
 
         # Randomly choose from the found coordinates
@@ -2277,14 +2233,10 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
         # Validate the format of the chosen coordinates
         if len(chosen_coordinates) != 2:
-            print(f"Error: chosen_coordinates contains {len(chosen_coordinates)} values, expected 2.")
             return None, None  # Handle error case
 
         # Extract the row and column from the chosen coordinates
         coord_row, coord_column = chosen_coordinates
-
-        # Log the details of the chosen pattern
-        print("coordinates before selecting center of pattern:", coord_row, coord_column, "height and width:", height, width)
 
         # Calculate the middle point of the pattern
         middle_width = (width // 2) + random.choice([1, width % 2]) - 1
@@ -2293,9 +2245,6 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
         # Calculate the final shooting coordinates based on the middle point
         coordinate_column = coord_column + middle_width
         coordinate_row = coord_row + middle_height
-
-        # Log the final shooting coordinates
-        print("coordinate_y, coordinate_x", coordinate_row, coordinate_column)
 
         # Return the final shooting coordinates
         return coordinate_row, coordinate_column
@@ -2350,8 +2299,7 @@ def cpu_deploy_all_ships(game_map, fleet, gaps_on_map):
         game_map (list): 2D map for the CPU.
         fleet (dict): Contains the CPU's fleet information.
         gaps_on_map (bool): If True, adds gaps between ships.
-        row_labels (list): List of row labels.
-        column_labels (list): List of column labels.
+
 
     Global Variables:
         DEFAULT_SYMBOL (str): Default symbol for empty cells.
@@ -2378,13 +2326,12 @@ def cpu_deploy_all_ships(game_map, fleet, gaps_on_map):
         for _ in range(quantity):
             # Variables to keep track of the ship's location and alignment
             location = ""
-            alignment = ""
 
             # Handle single-cell ships
             if size == 1:
                 alignment = "Single"
                 result = search_map_for_pattern(game_map, 1, 1)
-                if result == False:
+                if not result:
                     return False  # Abort if no suitable location is found
 
             else:
@@ -2395,19 +2342,19 @@ def cpu_deploy_all_ships(game_map, fleet, gaps_on_map):
                 # Try vertical alignment first
                 if alignment == "Vertical":
                     result = search_map_for_pattern(game_map, size, 1)
-                    if result == False:  # If not found, try horizontal
+                    if not result:  # If not found, try horizontal
                         alignment = "Horizontal"
                         result = search_map_for_pattern(game_map, 1, size)
-                        if result == False:
+                        if not result:
                             return False  # Abort if no suitable location is found
 
                 # Try horizontal alignment
                 elif alignment == "Horizontal":
                     result = search_map_for_pattern(game_map, 1, size)
-                    if result == False:  # If not found, try vertical
+                    if not result:  # If not found, try vertical
                         alignment = "Vertical"
                         result = search_map_for_pattern(game_map, size, 1)
-                        if result == False:
+                        if not result:
                             return False  # Abort if no suitable location is found
 
             # Choose a random suitable location
@@ -2459,7 +2406,7 @@ def handle_miss(player, row, column, map_hidden, map_display):
     timer = time.time() - start_time
 
     # Create an action outcome message indicating a miss
-    action_outcome = 'it was a MISS'
+    action_outcome = f'{player} performed shot on coordinates {row} and {column} and it was a MISS'
 
     # Log the miss action into the game actions log
     game_actions_log.append([player, timer, row, column, action_outcome])
@@ -2471,6 +2418,8 @@ def handle_miss(player, row, column, map_hidden, map_display):
     # Update the display map at the given row and column to mark the miss
     # Use the symbol designated for "Miss" in the SHIP_SYMBOLS dictionary
     map_display[row][column] = SHIP_SYMBOLS["Miss"][0]
+
+    return map_hidden, map_display
 
 
 
@@ -2498,7 +2447,10 @@ def action_perform_shoot(player, row, column, map_hidden, map_display, fleet, cp
         SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
 
     Returns:
-        str: "Hit" if the shot hit a ship, "Miss" if the shot missed, and None if an error occurs.
+        - fleet_target: Dictionary holding information about the CPU's fleet.
+        - map_hidden: Hidden map here we perform search and shoot
+        - map_display: Display map if shoot is success, then display hit or miss
+
     """
 
     # Declare global variables for function access
@@ -2509,26 +2461,20 @@ def action_perform_shoot(player, row, column, map_hidden, map_display, fleet, cp
 
     try:
         # If a ship is found at the coordinates
-        if ship_name != False:
-            print(f'{player} performed a shot on coordinates {row} and {column}, {ship_name} was damaged')
-            print("Damaged ship coordinates are: ", coordinates_list)
-
+        if ship_name:
             # Handle the logic for a hit ship
-            handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
+            map_hidden, map_display, fleet = handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
                             ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id, cpu_shot_log_tmp)
-            return "Hit"  # Return that the shot was a hit
+            return map_hidden, map_display, fleet
 
         else:  # If no ship was found at the coordinates
-            print(f'{player} performed a shot on coordinates {row} and {column}, it was a MISS')
-
             # Handle the logic for a missed shot
-            handle_miss(player, row, column, map_hidden, map_display)
-            return "Miss"  # Return that the shot was a miss
+            map_hidden, map_display = handle_miss(player, row, column, map_hidden, map_display)
+            return map_hidden, map_display, fleet
 
     except Exception as e:  # Handle exceptions gracefully
         print(f"An error occurred: {e}")
         return None  # Return None if an error occurs
-
 
 
 def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
@@ -2559,7 +2505,9 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
         SHIP_SYMBOLS (dict): Symbols used for different states of the ship.
 
     Returns:
-        None
+        - fleet_target: Dictionary holding information about the CPU's fleet.
+        - map_hidden: Hidden map here we perform search and shoot
+        - map_display: Display map if shoot is success, then display hit or miss
     """
 
     # Declare global variables for logging and timing
@@ -2573,7 +2521,8 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
     map_display[row][column] = SHIP_SYMBOLS["Hit"][0]
 
     # Log the action in the global game actions log
-    game_actions_log.append([player, timer, row, column, "Ship was Damaged"])
+    log_text = f'{player} performed shot on coordinates {row} and {column} and it was a HIT. Some Ship Damaged'
+    game_actions_log.append([player, timer, row, column, log_text])
 
     # If the player is the CPU, append the shot to the CPU's temporary shot log
     if player == "CPU":
@@ -2596,12 +2545,12 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
     # If the ship is sunk, handle additional logic
     if ship_sunk:
         alignment += "Sunk"
-        print(f"{player} has sunk {ship_name} on coordinates: {row}, {column}")
-        handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list,
+        map_hidden, map_display, fleet = handle_ship_sunk(player, fleet, ship_name, row, column, ship_size, alignment, coordinates_list,
                          coordinates_set_id, coordinates_list_id, map_display, map_hidden, cpu_shot_log_tmp)
+    return map_hidden, map_display, fleet
 
 
-def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list,
+def handle_ship_sunk(player, fleet, ship_name, ship_size, row, column, alignment, coordinates_list,
                      coordinates_set_id, coordinates_list_id, map_display, map_hidden,
                      cpu_shot_log_tmp, gaps_on_map=True):
     """
@@ -2623,8 +2572,7 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates
         cpu_shot_log_tmp (list): Temporary log of CPU actions.
         alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
         gaps_on_map (bool): Flag to indicate if gaps are allowed on the map.
-        label_row (list): Row labels for the map.
-        label_column (list): Column labels for the map.
+
 
     Global Variables:
         start_time (float): Game start time for logging.
@@ -2633,7 +2581,9 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates
         game_result (str): The result of the game ("Game Over" or None).
 
     Returns:
-        None
+        - fleet_target: Dictionary holding information about the CPU's fleet.
+        - map_hidden: Hidden map here we perform search and shoot
+        - map_display: Display map if shoot is success, then display hit or miss
     """
     # Declare global variables for logging and timing
     global start_time, SHIP_SYMBOLS, game_actions_log, game_result
@@ -2642,18 +2592,14 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates
     map_show_ship_or_symbols(map_display, coordinates_list, alignment, gaps_on_map)
     map_show_ship_or_symbols(map_hidden, coordinates_list, alignment, gaps_on_map)
 
-    # Display the two maps for debugging
-    print_two_maps(map_hidden, map_display, " hidden", "ships", gap=5)
-
     # Log the action of sinking the ship
     timer = time.time() - start_time
-    action_outcome = f'{ship_name} was sunk'
+    action_outcome = f'{player} performed shot on coordinates {row} and {column} and {ship_name} was SUNK'
     game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
 
     # If the player is the CPU, update its temporary shot log
     if player == "CPU":
         cpu_shot_log_tmp = update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp)
-        print("After updating CPU shot log:", cpu_shot_log_tmp)
 
     # Remove the sunk ship's coordinates from the fleet
     remove_coordinates_from_fleet(fleet, ship_name, coordinates_set_id)
@@ -2661,9 +2607,10 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates
     # Check for game over condition
     if not fleet:
         timer = time.time() - start_time
-        action_outcome = 'Game Over'
-        game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
-        game_result = "Game Over"
+        game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], "Game Over"])
+        game_result = False
+    return map_hidden, map_display, fleet
+
 
 
 
@@ -2682,10 +2629,6 @@ def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
     print_fleet(fleet)
 
     try:
-        # Additional logging for debugging
-        print()
-        print_fleet(fleet)
-        print("now we will be removing fleet[ship_name][Coordinates][coordinates_list_set_id]", ship_name, coordinates_list_set_id)
 
         # Remove the entire set of coordinates from the ship
         del fleet[ship_name]["Coordinates"][coordinates_list_set_id]
@@ -2699,9 +2642,6 @@ def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
         # If the quantity of this type of ship reaches zero, remove it from the fleet
         if fleet[ship_name]["Quantity"] <= 0:
             del fleet[ship_name]
-
-        # Final logging to display the updated state of the fleet
-        print_fleet(fleet)
 
     except KeyError:
         # Handle cases where the specified ship name does not exist in the fleet
@@ -2764,7 +2704,6 @@ def find_first_ship_alignment(coordinates_list):
     # Handle the case where there is only one coordinate in the log
     # In this case, the ship is considered 'Single'
     elif len(coordinates_list) == 1:
-        print("based on spu log find_first_ship_alignment as single")
         return ('Single', 0)
 
     # Loop through each coordinate in the log for comparison
@@ -2774,11 +2713,9 @@ def find_first_ship_alignment(coordinates_list):
 
             # If the rows are the same across two coordinates, it's horizontally aligned
             if row1 == row2:
-                print(" based on cpu log find_first_ship_alignment as Vertical")
                 return ('Horizontal', i)
             # If the columns are the same across two coordinates, it's vertically aligned
             elif column1 == column2:
-                print("based on cpu log find_first_ship_alignment as horizontal")
                 return ('Vertical', i)
 
     # If no alignment is found, but we know there is coordinates stored in action log, we will return Single and 0
@@ -2807,7 +2744,6 @@ def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
 
     # Get the alignment and last index from the CPU shot log
     alignment_info = find_first_ship_alignment(cpu_shot_log_tmp)
-    print("chosing best shot bbased on log ", cpu_shot_log_tmp, "and alignment is ", alignment_info)
 
     # Return None if no identifiable ship alignment is found
     if alignment_info is None or alignment_info[0] == 'None':
@@ -2838,32 +2774,29 @@ def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
     # Loop through the shifts to find the potential shots
     for coord in cpu_shot_log_tmp:
         row, column = coord
-        for drow, dcolumn in shifts:
-            new_row, new_column = row + drow, column + dcolumn
+        for d_row, d_column in shifts:
+            new_row, new_column = row + d_row, column + d_column
 
             # Check if the cell is within map boundaries and is untargeted
             if 0 <= new_row <= max_row and 0 <= new_column <= max_column:
                 # Then check if the cell hasn't been shot at before
                 if map_to_search[new_row][new_column] == DEFAULT_SYMBOL:
                     potential_shots.append([new_row, new_column])
-                    print("new potential shots: ", potential_shots)
 
         if len(potential_shots) > 0:
             break
 
     if len(potential_shots) == 0:
-        print("found noo coordinates on select_best_shot_based_on_alignment")
         shifts = [[0, 1], [0, -1], [1, 0], [-1, 0]]
         for coord in cpu_shot_log_tmp:
             row, column = coord
-            for drow, dcolumn in shifts:
-                new_row, new_column = row + drow, column + dcolumn
+            for d_row, d_column in shifts:
+                new_row, new_column = row + d_row, column + d_column
                 # Check if the new coordinates are within map boundaries and haven't been shot at before
                 if 0 <= new_row <= max_row and 0 <= new_column <= max_column:
                     # Then check if the cell hasn't been shot at before
                     if map_to_search[new_row][new_column] == DEFAULT_SYMBOL:
                         potential_shots.append([new_row, new_column])
-                        print("new potentail shots: ", potential_shots)
                 if len(potential_shots) > 0:
                     break
             if len(potential_shots) > 0:
@@ -2871,7 +2804,6 @@ def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
     # Randomly choose one of the potential shots if any are available
     if len(potential_shots) > 0:
         selected_row, selected_column = random.choice(potential_shots)
-        print("found coordinates on select_best_shot_based_on_alignment", selected_row, selected_column)
         return selected_row, selected_column
 
     # If no potential shots were found, return None, None
@@ -2880,55 +2812,54 @@ def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
 
 
 
-def cpu_move(fleet_target, map_target_hidden, map_target_display, cpu_shot_log_tmp):
+def cpu_move(fleet_target, map_hidden, map_display, cpu_shot_log_tmp):
     """
     Executes the CPU's move during the game.
     Args:
         - fleet_target: Dictionary holding information about the CPU's fleet.
-        - map_target_hidden: Hidden map for the CPU. here we perform search and shoot
-        - map_target_display: Display map for the CPU. if shoot is success, then display hit or miss
+        - map_hidden: Hidden map here we perform search and shoot
+        - map_display: Display map if shoot is success, then display hit or miss
         - cpu_shot_log_tmp: Temporary log for the CPU's shots.
 
 
     Global Variables:
-    - game_result: Holds the current state of the game ("Game Over" or None).
+        - game_result: Holds the current state of the game ("Game Over" or None).
 
-    - game_actions_log: Log for game actions.
-    - start_time: Time when the game started.
-    - SHIP_SYMBOLS: Dictionary holding symbols for different ship states.
+        - game_actions_log: Log for game actions.
+        - start_time: Time when the game started.
+        - SHIP_SYMBOLS: Dictionary holding symbols for different ship states.
 
     Returns:
-    - None: Updates global variables as side effects.
+        None
     """
 
     # Declare global variables accessed within the function
     global game_result
     global game_actions_log, start_time, SHIP_SYMBOLS
 
-
     # Identify the player as CPU for logging and action purposes
     player = "CPU"
 
-    # Check if there are any damaged but unsunk ships in cpu_shot_log_tmp
+    # Check if there are any damaged but not sunk ships in cpu_shot_log_tmp
     if len(cpu_shot_log_tmp) == 0:
-        print("No damaged ships in CPU's temporary log.")
         # If no damaged ships are found, choose coordinates based on the largest ship in the fleet
-        row, column = cpu_choose_shooting_coordinates_biggest_ship(fleet_target, map_target_hidden)
+        row, column = cpu_choose_shooting_coordinates_biggest_ship(fleet_target, map_hidden)
         # Perform the shooting action and update the game state
-        action_perform_shoot(player, row, column, map_target_hidden, map_target_display, fleet_target, cpu_shot_log_tmp)
+        map_hidden, map_display, fleet = action_perform_shoot(player, row, column, map_hidden, map_display, fleet_target, cpu_shot_log_tmp)
+        return map_hidden, map_display, fleet
 
         # Check for game over condition
     else:
-        print(f"Damaged ships found in CPU's temporary log: {cpu_shot_log_tmp}")
         # If damaged ships are found, focus on sinking them by selecting the best shot based on ship alignment
-        row, column = select_best_shot_based_on_alignment(map_target_hidden, cpu_shot_log_tmp)
+        row, column = select_best_shot_based_on_alignment(map_hidden, cpu_shot_log_tmp)
         # Perform the shooting action and update the game state
-        action_perform_shoot(player, row, column, map_target_hidden, map_target_display, fleet_target, cpu_shot_log_tmp)
+        map_hidden, map_display, fleet = action_perform_shoot(player, row, column, map_hidden, map_display, fleet_target, cpu_shot_log_tmp)
+        return map_hidden, map_display, fleet
 
 
 
-# Game Start Functions
-#---------------------
+"""Game Start Functions
+---------------------"""
 
 
 # Run the game
@@ -2951,12 +2882,11 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
     # Declare global variables accessed within the function
     global cpu_shot_log_tmp, game_actions_log, DEFAULT_SYMBOL, game_result
 
-
     # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
     clear_terminal()
 
     # Print ASCII art
-    #print_acid_effect()
+    print_acid_effect()
 
     # Initializing game instructions
     height, width, fleet, gaps_on_map = game_instructions()
@@ -2966,7 +2896,7 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
     map_player_display, map_player_hidden, fleet_player = create_initial_game_variables(height, width, symbol, fleet)
 
     # Now we will ask player to Deploy all ships:
-    #map_player_display, fleet_player = player_deploy_all_ships(map_player_display,map_player_hidden, fleet_player, gaps_on_map)
+    map_player_display, fleet_player = player_deploy_all_ships(map_player_display,map_player_hidden, fleet_player, gaps_on_map)
 
     # After all player ships are deployed, we will reset hidden map, so it is blank. This map will be attacked by CPU.
     map_player_hidden = create_map(height, width, DEFAULT_SYMBOL)
@@ -2976,13 +2906,22 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
     map_cpu_display, fleet_cpu = cpu_deploy_all_ships(map_cpu_display, fleet_cpu, gaps_on_map)
 
     # now creating loop for this current game
-    #game_result = True
-    #while game_result == True:
-    for i in range(5):
+    game_result = True
+    game_actions_log = [[],["Player", "Time", "Row", "Column", "Outcome"]]
+
+    while True:
+        if not game_result:
+            break
         clear_terminal()
+        print(game_actions_log[-2][4])
+        print(game_actions_log[-1][4])
         print_two_maps(map_cpu_hidden, map_cpu_display, "hidden", "visible", 10)
         # Player goes first
-        player_shoot_input(map_cpu_display, map_cpu_hidden, fleet_cpu)
+        map_player_display, map_cpu_hidden, fleet_cpu = player_shoot_input(map_cpu_display, map_cpu_hidden, fleet_cpu)
+        if not game_result:
+            break
+        map_cpu_display, map_player_hidden, fleet_player = cpu_move(fleet_player, map_player_hidden, map_cpu_display, cpu_shot_log_tmp)
+    print(game_actions_log[-1][4])
 
 
 
@@ -2992,4 +2931,6 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
 
 
 
-battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time,game_actions_log)
+
+
+battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
