@@ -15,22 +15,13 @@ map_height_cpu = "" # empty value for map size, it can be adjusted in settings, 
 map_width_cpu = ""# empty value for map size, it can be adjusted in settings, if not, function will assign irr DEFAULT_WIDTH
 DEFAULT_SYMBOL = '?'  # Symbol representing an empty cell in the map
 DEFAULT_GAPS_BETWEEN_MAPS = True
-MAP_ROW_INDEXES = "1234567890"
-MAP_COLUMN_INDEXES = "1234567890"
-
-# Initialize 2D maps for CPU and Player
-map_cpu_display = []
-map_cpu_hidden = []
-map_player_hidden = []
-map_player_ = []
+MAP_ROW_INDEXES = [0,1,2,3,4,5,6,7,8,9]
+MAP_COLUMN_INDEXES =[0,1,2,3,4,5,6,7,8,9]
 
 # Initialize game-related variables
-save_map_height = "" # variable to keep for current game settings (when starting game, this will be used)
-save_map_width = "" # variable to keep for current game settings (when starting game, this will be used)
-save_fleet = {} # variable to keep for current game settings (when starting game, this will be used)
-start_time = time.time()  # Record the start time for logging purposes
-game_result = None  # Variable to store the game outcome (win, lose)
+game_result = True  # Variable to store the game outcome if it is True - game is ongoing
 cpu_shot_log_tmp = []  # Temporarily store CPU actions if a ship is hit
+start_time = time.time() # tamer will start with game
 
 # Initialize a log to store game actions
 game_actions_log = []
@@ -79,8 +70,6 @@ DEFAULT_FLEET = {
     "Destroyer": {"Size": 2, "Quantity": 2, "Coordinates": []},
     "Tugboat": {"Size": 1, "Quantity": 4, "Coordinates": []}
 }
-fleet_cpu = {} # this will be later used when starting game, to store player fleet information and each ship coordinates
-fleet_player = {} # this will be used later to store CPU fleet, to store CPU fleet information and each ship coordinates
 
 
 # Game instructions and settings, presented as lists
@@ -97,12 +86,15 @@ INSTRUCTIONS = ["1. Ships can be aligned Horizontally or Vertically",
 GAME_ADJUST_MAIN = ["If you to adjust your FLEET, type" "\u001b[33mF\u001b[0m" " and press enter",
                     "If you want to change MAP size, type " "\u001b[33mM\u001b[0m" " and press enter",
                     "If you want to change coordinate system Indexes from numbers to letters, type" "\u001b[33mI\u001b[0m" " and press enter",
-                    "If you want to change coordinate entering style from ROW+COLUMN to COLUMN+ROW, type " "\u001b[33mS\u001b[0m" " and press enter",
+                    "If you want to disable GAPS between ships, type G and press enter",
                     "",
                     "To return to main menu, press " "\u001b[33m0\u001b[0m" " and press enter"]
 
 # Helper Functions
 # ----------------
+
+
+
 
 def clear_terminal():
     """
@@ -177,183 +169,462 @@ wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 
 # Initial game start functions
 #-----------------------------
+
+
 def create_initial_game_variables(height, width, symbol, fleet):
+    """
+    Creates and returns the initial game variables for the Battleship game.
+
+    Parameters:
+    - height (int): The height of the game map.
+    - width (int): The width of the game map.
+    - symbol (str): The default symbol to fill the game map with.
+    - fleet (dict): The initial fleet configuration.
+
+    Returns:
+    - tuple: A tuple containing:
+        1. new_map (list of lists): The initialized game map.
+        2. new_map_hidden (list of lists): A hidden copy of the game map.
+        3. new_fleet (dict): A deep copy of the initial fleet configuration.
+    """
+
+    # Create the game map with the given dimensions and default symbol.
+    # The function 'create_map' is assumed to be defined elsewhere in the code.
     new_map = create_map(width, height, symbol)
+
+    # Create a deep copy of the game map to serve as the hidden map.
+    # Deep copy ensures that changes to one map won't affect the other.
     new_map_hidden = copy.deepcopy(new_map)
+
+    # Create a deep copy of the initial fleet configuration.
+    # This allows us to manipulate the fleet during the game without affecting the original configuration.
     new_fleet = copy.deepcopy(fleet)
+
+    # Return the newly created game variables as a tuple.
     return new_map, new_map_hidden, new_fleet
 
 
-def game_instructions(height, width, symbol, fleet):
-
-    global SHIP_SYMBOLS, INSTRUCTIONS, DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_FLEET
-    # genetrating map and fleet, to be displayed on left side , on right side will be instrucions
-    tmp_map = create_map(height, width, symbol)
-    tmp_fleet = copy.deepcopy(fleet)
-    cpu_deploy_all_ships(tmp_map,tmp_fleet)
-
-    while True:
-        print_map_and_list(tmp_map, INSTRUCTIONS, "MAP EXAMPLE", 10)
-        try:
-            # Ask the user if they would like to adjust game settings
-            changes = input().capitalize()
-            # If the user opts to adjust settings
-            if changes in ["Y", "YES"]:
-                DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_FLEET = modify_game_setttings(height, width, symbol, fleet)
-                continue
-            else:
-
-                return False
-
-        # Handle keyboard interrupt to gracefully exit the function
-        except KeyboardInterrupt:
-            print("Game adjustment interrupted.")
-            return False
+import copy  # Import the copy module for deep copy operations
 
 
-# Game Adjust Settings functions
-#------------------------------
-
-def modify_game_setttings(height, width, symbol, fleet):
+def game_instructions():
     """
-    Adjust game settings, including the map and BattleShips Fleet.
-    This function offers the user a choice to modify the game map,
-    modify existing ships, add new ships, or finish adjustments.
+    Displays the game instructions and allows the player to adjust game settings.
 
-    Args:
+    Global Variables:
+    - SHIP_SYMBOLS: Dictionary holding symbols for different ship states.
+    - INSTRUCTIONS: String containing game instructions.
+    - DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH: Default dimensions of the game map.
+    - DEFAULT_FLEET: Default fleet configuration.
+    - MAP_ROW_INDEXES, MAP_COLUMN_INDEXES: Default row and column labels.
+    - DEFAULT_GAPS_BETWEEN_MAPS: Default gap between the two displayed maps.
 
     Returns:
-        bool: True if the game adjustment was interrupted, False otherwise.
+    - tuple: A tuple containing updated game settings or False if interrupted.
     """
 
-    # Start an infinite loop to continuously offer adjustment options to the user
-    global  SHIP_SYMBOLS, GAME_ADJUST_MAIN, MAP_ROW_INDEXES, MAP_COLUMN_INDEXES, DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_FLEET
+    # Declare global variables accessed within the function
+    global SHIP_SYMBOLS, INSTRUCTIONS, DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_FLEET, MAP_ROW_INDEXES, MAP_COLUMN_INDEXES, DEFAULT_GAPS_BETWEEN_MAPS
 
+    # Initialize default game settings
+    height = DEFAULT_MAP_HEIGHT
+    width = DEFAULT_MAP_WIDTH
+    gaps_on_map = DEFAULT_GAPS_BETWEEN_MAPS
+    fleet = copy.deepcopy(DEFAULT_FLEET)
+
+    # Create a temporary map and fleet for demonstration purposes
+    tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+    tmp_fleet = copy.deepcopy(DEFAULT_FLEET)
+
+    # Deploy ships on the temporary map
+    tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+    # Main loop to display instructions and handle user input
     while True:
+        # Display the example map alongside the game instructions
+        print_map_and_list(tmp_map, INSTRUCTIONS, "MAP EXAMPLE", 10)
 
-        # generating new map to display on left side
-        tmp_fleet = copy.deepcopy(fleet) # resetting fleet so new ship alignment can be displayed
-        tmp_map = create_map(height, width, symbol)
-        tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet)
-        clear_terminal()
-        print_map_and_list(tmp_map, GAME_ADJUST_MAIN, "MAP EXAMPLE", )
         try:
-            user_input = input().capitalize()
-            if not user_input:
-                print("Invalid input. Please type F, M, I, S, or 0 - tp return back to Instructions")
-                continue
-            if user_input == "F":
-                DEFAULT_FLEET = modify_game_settings_fleet(height, width, symbol, fleet)
+            # Prompt the user to decide whether to adjust the game settings
+            changes = input().capitalize()
 
-                # adjust fleet
+            # If the user opts to adjust settings
+            if changes in ["Y", "YES"]:
+                # Call the function to modify game settings
+                height, width, fleet, gaps_on_map = modify_game_settings(height, width, fleet, gaps_on_map)
+                continue  # Continue the loop to display updated settings
+            if changes == "0":
+                # Return the final game settings
+                return height, width, fleet, gaps_on_map
+
+            else:
+                # Return the final game settings
+                return height, width, fleet, gaps_on_map
+
+        # Handle keyboard interrupt to exit the function gracefully
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False  # Return False to indicate interruption
+
+#Game Adjust Settings functions
+#------------------------------
+
+import copy  # Import the copy module for deep copy operations
+
+
+def modify_game_settings(height, width, fleet, gaps_on_map):
+    """
+    Adjusts game settings based on user input. The settings include map dimensions,
+    fleet configuration, row and column labels, and gaps between maps.
+
+    Args:
+    - height (int): The height of the map.
+    - width (int): The width of the map.
+    - fleet (dict): The current fleet configuration.
+    - label_row (list): The row labels.
+    - label_column (list): The column labels.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
+
+    Returns:
+    - tuple: Updated game settings if the adjustment was successful.
+    - bool: False if the game adjustment was interrupted.
+    """
+
+    # Declare global variables accessed within the function
+    global SHIP_SYMBOLS, GAME_ADJUST_MAIN
+
+    # Main loop to continuously offer adjustment options to the user
+    while True:
+        # Create a temporary map and fleet for demonstration purposes
+        tmp_fleet = copy.deepcopy(fleet)  # Reset the fleet for new ship alignment
+        tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+
+        # Deploy ships on the temporary map
+        tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+        # Clear the terminal and display the current state
+        clear_terminal()
+        print_map_and_list(tmp_map, GAME_ADJUST_MAIN, "MAP EXAMPLE", 10)
+
+        try:
+            # Get user input for which setting to adjust
+            user_input = input().capitalize()
+
+            # Validate user input
+            if not user_input:
+                print("Invalid input. Please type F, M, I, S, or 0 to return back to Instructions.")
+                continue
+
+            # Modify fleet settings
+            if user_input == "F":
+                fleet = modify_game_settings_fleet(height, width, fleet, gaps_on_map)
+
+            # Modify map dimensions
             elif user_input == "M":
-                print("M")
-                DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH = modify_game_settings_map(height, width, symbol, fleet)
+                height, width = modify_game_settings_map(height, width, fleet, gaps_on_map)
+
+            # Modify row and column labels
             elif user_input == "I":
-                print("I")
-                MAP_ROW_INDEXES, MAP_COLUMN_INDEXES = modify_game_settings_labels(height, width, symbol, fleet)
-                # change indexes
-            elif user_input == "S":
-                print("S")
-                # user adjust row-column input type
+                modify_game_settings_labels(height, width, fleet, gaps_on_map)
+
+            # Modify gap settings
+            elif user_input == "G":
+                gaps_on_map = modify_game_settings_gaps(height, width, fleet, gaps_on_map)
+
+            # Exit the loop and return the final settings
             elif user_input == "0":
-                return height, width, fleet
+                return height, width, fleet, gaps_on_map
+
+            # Invalid input
+            else:
+                print("Invalid option. Please try again.")
 
         # Handle keyboard interrupt to gracefully exit the function
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
-            return False
+            return False  # Return False to indicate interruption
 
 
-def modify_game_settings_labels(height, width, symbol, fleet):
-    input_validation = True
-    input_values = [1,2]
+
+def modify_game_settings_gaps(height, width, fleet, gaps_on_map):
+    """
+    Allows the user to enable or disable the requirement for gaps between ships on the game map.
+
+    Args:
+    - height (int): The height of the game map.
+    - width (int): The width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Row labels for the game map.
+    - label_column (list): Column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map (True if enabled, False otherwise).
+
+    Returns:
+    - bool: Updated setting for gaps between ships on the map.
+    """
+
+    # Declare the global variable for the default symbol used in the map
+    global DEFAULT_SYMBOL, MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+
+    # Infinite loop to keep asking the user for input until a valid response is received
     while True:
         try:
+            # Create a temporary map and a deep copy of the current fleet for demonstration purposes
+            tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+            tmp_fleet = copy.deepcopy(fleet)
 
-            if input_validation == False:
-                print(f'You have entered {len(input_values)}, i require just 2: Row symbol and Column')
-            print(f" Current game map coordinate system is numeric, if you want to change it, enter 2 symbols.  Rows then columns")
-            print(f' First symbol will be rows indexes, if you type number, it will be digits, if you enter letter - will be letters')
-            print(f' Second symbol will be column indexes, if you type number, it will be digits, if you enter letter - will be letters')
+            # Deploy all ships on this temporary map to show the user
+            cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+            print()
+            print(f'Default game rules are set for gaps between ships to be {"enabled" if gaps_on_map else "disabled"}')
+            print(f'If you would like to change it, just type YES, NO, True, False and press Enter.')
+
+            # Get the user's input
             user_input = input()
-            input_validation, input_values, output_text = validate_user_input(user_input, 2)
-            if input_validation == True:
-                # creating indexes for rows
-                if input_values[0].isdigit():
-                    map_rows_indexes = list(range(height + 1))
-                elif input_values[0].isalpha():
-                    map_rows_indexes =  [chr(97 + i) for i in range(height + 1)]
-                # creating indexes for columns
-                if input_values[1].isdigit():
-                    map_column_indexes = list(range(width + 1))
-                elif input_values[1].isalpha():
-                    map_column_indexes = [chr(97 + i) for i in range(width + 1)]
-                return map_rows_indexes, map_column_indexes
 
+            # Check for a non-empty response
+            if len(user_input) > 0:
+                # Convert the user's response to lowercase and compare it to the accepted answers
+                if user_input.lower() in ['yes', 'true']:
+                    gaps_on_map = True  # Enable gaps between ships
+                    return gaps_on_map
+                elif user_input.lower() in ['no', 'false']:
+                    gaps_on_map = False  # Disable gaps between ships
+                    return gaps_on_map
+                else:
+                    print("Invalid input. Please type YES, NO, True, or False.")
+            else:
+                print("No input detected. Please type YES, NO, True, or False.")
 
-
-
-
+        # Handle any keyboard interrupts to exit the loop gracefully
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
-            return False
+            return gaps_on_map  # Return the current setting in case of an interruption
 
 
+def modify_game_settings_labels(height, width, fleet, gaps_on_map):
+    """
+    Allows the user to customize the row and column labels on the game map.
+
+    Args:
+    - height (int): The height of the game map.
+    - width (int): The width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Current row labels for the game map.
+    - label_column (list): Current column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
+
+    Returns:
+    - list, list: New row and column indexes for the map if adjustments were successful.
+    - bool: False if the game adjustment was interrupted.
+    """
+
+    # Declare the global variable for the default symbol used in the map
+    global DEFAULT_SYMBOL, MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+
+    input_validation = True  # Initialize input validation flag
+    input_values = [1, 2]  # Initialize the list to store the user input values
+    # Start an infinite loop to continuously offer adjustment options to the user
+    while True:
+
+        try:
+            # Create a temporary map and a deep copy of the fleet for demonstration purposes
+            tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+            tmp_fleet = copy.deepcopy(fleet)
+
+            # Deploy the fleet on the temporary map for demonstration
+            tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, fleet, gaps_on_map)
+
+            # Define the text to display alongside the map
+            tmp_text = [
+                "Changing Labeling on map Row and Column",
+                "Current game map coordinate system is numeric. To change it, enter 2 symbols: Rows then Columns.",
+                "The first symbol will be for row indexes. Use a number for digits or a letter for alphabets.",
+                "The second symbol will be for column indexes. Use a number for digits or a letter for alphabets."
+            ]
+
+            # Display the map and instructions side by side
+            print_map_and_list(tmp_map, tmp_text, "Map Example", 10)
+
+            # Check if the previous input was invalid and display a warning
+            if not input_validation:
+                print(
+                    f'You have entered {len(input_values)} values. Only 2 are required: one for Row and one for Column.')
+
+            # Now reseting values back after print Out
+            input_validation = True  # Initialize input validation flag
+            input_values = [1, 2]  # Initialize the list to store the user input values
+
+            # Take user input
+            user_input = input()
+
+            # Validate user input
+            input_validation, input_values, output_text = validate_user_input(user_input, 2)
 
 
-def modify_game_settings_map(height, width, symbol, fleet):
-    input_values = [10,10]
-    input_validation = True
-    check_result = True
+            # If input is valid, proceed to adjust row and column indexes
+            if input_validation:
+                # Create row indexes based on the first symbol
+                if input_values[0].isdigit():
+                    MAP_ROW_INDEXES = list(range(height + 1))
+                elif input_values[0].isalpha():
+                    MAP_ROW_INDEXES = [chr(97 + i) for i in range(height + 1)]
+
+                # Create column indexes based on the second symbol
+                if input_values[1].isdigit():
+                    MAP_COLUMN_INDEXES = list(range(width + 1))
+                elif input_values[1].isalpha():
+                    MAP_COLUMN_INDEXES = [chr(97 + i) for i in range(width + 1)]
+
+                return
+
+        # Handle any keyboard interrupts to exit the loop gracefully
+        except KeyboardInterrupt:
+            print("Game adjustment interrupted.")
+            return False  # Return False to indicate that the adjustment was interrupted
+
+
+def modify_game_settings_map(height, width, fleet, gaps_on_map):
+    """
+    Allows the user to customize the dimensions of the game map.
+
+    Args:
+    - height (int): The current height of the game map.
+    - width (int): The current width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Current row labels for the game map.
+    - label_column (list): Current column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
+
+    Returns:
+    - int, int: New dimensions for the game map if adjustments were successful.
+    - bool: False if the game adjustment was interrupted.
+    """
+
+    # Declare the global variable for the default symbol used in the map
+    global DEFAULT_SYMBOL, MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+
+    input_values = [10, 10]  # Initialize the list to store the user input values
+    input_validation = True  # Initialize input validation flag
+    check_result = True  # Initialize a flag to check if the fleet fits on the map
+    # Start an infinite loop to continuously offer adjustment options to the user
     while True:
         try:
+            # Clear the terminal for a fresh display
             clear_terminal()
-            if input_validation == False:
-                if len(input_values) !=2:
-                    print(f'You have entered just {len(input_values)} values, i require 2: Height and Width')
+
+            # Create a temporary map and a deep copy of the fleet for demonstration purposes
+            tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+            tmp_fleet = copy.deepcopy(fleet)
+
+            # Deploy the fleet on the temporary map for demonstration
+            tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+            # Define the text to display alongside the map
+            tmp_text = [
+                "Now you can change game MAP settings",
+                "Current settings are:",
+                f"Map height is set to {height}",
+                f"Map width is set to {width}",
+                "If you would like to change it, please enter new Height and Width"
+            ]
+
+            # Display the map and instructions side by side
+            print_map_and_list(tmp_map, tmp_text, "Map Example", 10)
+
+            # Check if the previous input was invalid and display a warning
+            if not input_validation:
+                if len(input_values) != 2:
+                    print(f'You have entered just {len(input_values)} values, I require 2: Height and Width.')
                 else:
                     for i in range(len(input_values)):
                         print(output_text[i])
-            if check_result == False:
-                print(f' Sorry but I believe you need bigger size of map for current fleet')
 
-            print(f'Current game map is {height} height and {width} wide. as you hhave selected to modify these parameters, please type height and width and press ENTER')
+            # Check if the fleet doesn't fit on the map and display a warning
+            if not check_result:
+                print('Sorry, but I believe you need a bigger map for the current fleet.')
+
+            # Resetting values:
+            input_values = [10, 10]  # Initialize the list to store the user input values
+            input_validation = True  # Initialize input validation flag
+            check_result = True  # Initialize a flag to check if the fleet fits on the map
+
+            # Take user input
             user_input = input()
-            input_validation, input_values, output_text = validate_user_input(user_input,2,"integer")
-            if input_validation == True: # user entered values are valid, now we check can we mae map with given fleet
-                tmp_map = create_map(int(input_values[0]),int(input_values[1]), symbol)
+
+            # Validate the user input
+            input_validation, input_values, output_text = validate_user_input(user_input, 2, "integer")
+
+            # If the input is valid, proceed to check if the fleet fits on the map with the new dimensions
+            if input_validation:
+                # before we try if game fits all ships, we need to change Row and column labels, otherwise map can not be printed:
+                # Create Row indexes based on the second symbol
+                if str(MAP_ROW_INDEXES[0]).isdigit():
+                    MAP_ROW_INDEXES = list(range(input_values[0] + 1))
+                elif str(MAP_ROW_INDEXES[0]).isalpha():
+                    MAP_ROW_INDEXES = [chr(97 + i) for i in range(input_values[0] + 1)]
+
+                # Create Column indexes based on the second symbol
+                if str(MAP_COLUMN_INDEXES[1]).isdigit():
+                    MAP_COLUMN_INDEXES = list(range(input_values[1] + 1))
+                elif str(MAP_COLUMN_INDEXES[1]).isalpha():
+                    MAP_COLUMN_INDEXES = [chr(97 + i) for i in range(input_values[1] + 1)]
+
+                # create temporary map to test with
+                tmp_map = create_map(int(input_values[0]), int(input_values[1]), DEFAULT_SYMBOL)
                 tmp_fleet = copy.deepcopy(fleet)
-                #testing if we can fir ships on givem map dimensions
-                check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map,tmp_fleet)
-                if check_result == True:
+
+                # Test if the fleet can fit on the map with the new dimensions
+                check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet, gaps_on_map)
+
+                # If the fleet fits, update the map dimensions
+                if check_result:
                     height = int(input_values[0])
                     width = int(input_values[1])
                     return height, width
+
+        # Handle any keyboard interrupts to exit the loop gracefully
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
-            return False
+            return False  # Return False to indicate that the adjustment was interrupted
 
 
 
+def modify_game_settings_fleet(height, width, fleet, gaps_on_map):
+    """
+    Allows the user to customize the fleet of ships.
 
+    Args:
+    - height (int): The current height of the game map.
+    - width (int): The current width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Current row labels for the game map.
+    - label_column (list): Current column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
 
-
-
-
-
-
-def modify_game_settings_fleet(height, width, symbol, fleet):
+    Returns:
+    - dict: New fleet dictionary if adjustments were successful.
+    - bool: False if the game adjustment was interrupted.
+    """
+    global DEFAULT_SYMBOL  # Declare the global variable for the default symbol used in the map
 
     while True:
+        # Clear the terminal for a fresh display
+        user_input = ""
         clear_terminal()
-        print("This is game DEFAULT fleet, if you want to modify ship ( ship size and quantity) or delete ship, pplease select ship by typing ship name or ship index and press enter")
-        print("Example   Cruiser is index 3")
-        print()
-        print("If you want to add new ship, please type N and hit ENTER")
-        print("To return to main Setings menu, please type 0 (zero) and press ENTER")
-        print()
-        print_fleet(fleet)
+
+        # Create a temporary map and a deep copy of the fleet for demonstration purposes
+        tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+        tmp_fleet = copy.deepcopy(fleet)
+
+        tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+        print_map_and_fleet_aligned_columns(tmp_map, tmp_fleet, "Map Example", 10)
+
+        # Display user instructions
+        print("This is the game DEFAULT fleet. If you want to modify a ship (size and quantity) or delete a ship, please select the ship by typing its name or index and press Enter.")
+        print("Example: Cruiser is index 3")
+        print("If you want to add a new ship, please type N and hit ENTER.")
+        print("To return to the main Settings menu, please type 0 (zero) and press ENTER.")
 
         try:
             user_input = input().capitalize()
@@ -361,111 +632,157 @@ def modify_game_settings_fleet(height, width, symbol, fleet):
             if not user_input:
                 print("Invalid input. Please enter a ship name, index, or 0 to go back.")
                 continue
-            if len(user_input) == 1:
-                if user_input.capitalize() == "N":
-                    fleet = modify_game_settings_fleet_ad_new_ship(height, width, symbol, fleet)
-                elif user_input == "0":
-                    return
-                else:
-                    if ship_name in fleet:
-                        changes = modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name)
-                        if changes != False:
-                            fleet = changes
 
+            if user_input == "N":
+                fleet = modify_game_settings_fleet_add_new_ship(height, width, fleet, gaps_on_map)
+            elif user_input == "0":
+                return fleet
 
-            elif user_input.isdigit():
+            else:
+                closest_ship_name = find_closest_ship_name(user_input, fleet)
+                if closest_ship_name:
+                    fleet = modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, closest_ship_name)
 
-                index = int(user_input) - 1  # Convert to zero-based index
+            if user_input.isdigit():
+                if user_input == "0":
+                    return fleet
+
+                index = int(user_input) - 1
                 ship_names = list(fleet.keys())
                 if 0 <= index < len(ship_names):
                     ship_name = ship_names[index]
-                elif user_input == "0":
-                    return fleet
-                else:
-                    print("Invalid index. Please try again.")
-                    continue
-            else:
-                for ship_name_in_fleet in fleet.keys():
-                    if user_input.lower() in ship_name_in_fleet.lower():
-                        ship_name = ship_name_in_fleet
+                    fleet = modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, ship_name)
 
-
-
-
-                    # Handle empty input
-            if not user_input:
-                print("Invalid input. Please enter a comma-separated pair of digits, or 0 to go back.")
-                continue
-        # Handle keyboard interrupt to gracefully exit the function
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False
 
 
-
-def modify_game_settings_fleet_ad_new_ship(height, width, symbol, fleet):
+def find_closest_ship_name(user_input, fleet):
     """
-    Modifies the game settings by adding a new ship to the fleet.
+    Find the closest matching ship name in the fleet based on the following criteria:
+    1. Direct substring match.
+    2. Minimum Levenshtein distance.
 
-    Parameters:
-        height (int): The height of the game map.
-        width (int): The width of the game map.
-        symbol (str): The symbol used to represent ships.
-        fleet (dict): The current state of the fleet.
+    Args:
+        user_input (str): The user input for finding the closest ship.
+        fleet (dict): The fleet dictionary containing ship details.
 
     Returns:
-        height, width (tuple): The new dimensions of the game map.
+        str: The closest matching ship name.
     """
-    validated_user_input_1 = ["ShipName","Size","QTY"]
+
+    # Initialize variables to keep track of closest matches
+    closest_match = None
+    smallest_distance = float("inf")
+
+    # Convert the user input to lowercase for case-insensitive comparison
+    user_input = user_input.lower()
+
+    # First, look for a direct substring match
+    for ship_name in fleet.keys():
+        if user_input in ship_name.lower():
+            return ship_name
+
+    # Fall back to using Levenshtein distance
+    for ship_name in fleet.keys():
+        # Calculate the distance
+        distance = levenshtein_distance(user_input, ship_name.lower())
+
+        # Update the closest match if a smaller distance is found
+        if distance < smallest_distance:
+            closest_match = ship_name
+            smallest_distance = distance
+
+    return closest_match
+
+
+
+def modify_game_settings_fleet_add_new_ship(height, width, fleet, gaps_on_map):
+    """
+    Allows the user to add a new ship to the fleet.
+
+    Args:
+    - height (int): The height of the game map.
+    - width (int): The width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Current row labels for the game map.
+    - label_column (list): Current column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
+
+    Returns:
+    - dict: Updated fleet dictionary if a new ship was successfully added.
+    """
+
+    # Access the global variable for the default symbol used on the map
+    global DEFAULT_SYMBOL
+
+    # Initialize variables for user input validation and fleet fitting check
+    validated_user_input_1 = ["ShipName", "Size", "QTY"]
     check_result = True
+    # Start an infinite loop to continuously offer adjustment options to the user
     while True:
+
         try:
-            # Clear the terminal (clear_terminal function not shown here)
+            # Clear the terminal screen
             clear_terminal()
 
-            # Check if the user entered 3 values for the ship
+            # Create a temporary map and a deep copy of the fleet for demonstration
+            tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+            tmp_fleet = copy.deepcopy(fleet)
+
+            # Deploy the fleet on the temporary map for demonstration
+            tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+            # Display the map and fleet side by side
+            print_map_and_fleet_aligned_columns(tmp_map, tmp_fleet, "Map Example", 10)
+
+            # Validate that the user has entered exactly 3 values for the new ship
             if len(validated_user_input_1) != 3:
-                print(
-                    f'Please make sure you have entered 3 values, as at the moment I can see only {len(validated_user_input_1)} values.')
+                print(f'Please make sure you have entered 3 values; currently, I see only {len(validated_user_input_1)} values.')
 
-            # Show the current fleet
-            print("This is your current fleet:")
-            print_fleet(fleet)
+            # Inform the user if the new ship cannot fit on the map
+            if not check_result:
+                print(f'Cannot fit the new ship {validated_user_input_1[0]} with size {validated_user_input_2[0]} and quantity {validated_user_input_2[1]} into the current fleet.')
+                print('Consider increasing the map size before adding this new ship.')
 
-            # If the previous check failed, inform the user
-            if check_result == False:
-                print(
-                    f'I cannot squeeze in new ship {validated_user_input_1[0]} with width {validated_user_input_2[0]} and size {validated_user_input_2[1]} into the current fleet.')
-                print(
-                    'Because such a new fleet is not rational for the given map size. Try increasing the map size, and then add this ship again.')
+            # Resetiing  variables for user input validation and fleet fitting check
+            validated_user_input_1 = ["ShipName", "Size", "QTY"]
+            check_result = True
 
-            # Get the user input for the new ship
-            user_input = input("Please enter Ship name, size, and quantity of ships you want to add to the fleet: ")
+
+            # Capture the user's input for the new ship
+            user_input = input("Please enter the Ship name, size, and quantity of ships you want to add to the fleet: ")
+
+            # Exit if the user enters '0'
             if user_input == "0":
                 return fleet
+
+            # Validate the user's input
             validation_result_1, validated_user_input_1, output_text_1 = validate_user_input(user_input, 3)
 
+            # Check if the first validation succeeded
             if validation_result_1:
-                # Validate if the last two parts are integers
+                # Validate the size and quantity to ensure they are integers
                 new_input = f"{validated_user_input_1[1]},{validated_user_input_1[2]}"
-                validation_result_2, validated_user_input_2, output_text_2 = validate_user_input(new_input, 2,
-                                                                                                 "integer")
+                validation_result_2, validated_user_input_2, output_text_2 = validate_user_input(new_input, 2, "integer")
 
+                # If the second validation also succeeds
                 if validation_result_2:
-                    # Create a temporary copy of the fleet and map
+                    # Make a deep copy of the current fleet and map for testing
                     tmp_fleet = copy.deepcopy(fleet)
-                    tmp_map = create_map(height, width, symbol)
+                    tmp_map = create_map(height, width, DEFAULT_SYMBOL)
 
                     # Add the new ship to the temporary fleet
                     tmp_fleet[validated_user_input_1[0]] = {"Size": int(validated_user_input_2[0]),
                                                             "Quantity": int(validated_user_input_2[1]),
                                                             "Coordinates": []}
 
-                    # Check if the new fleet fits on the map
-                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet)
+                    # Check if the updated fleet can fit on the map
+                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet, gaps_on_map)
 
+                    # If the new fleet fits, update the actual fleet
                     if check_result:
-                        # Update the actual fleet with the new ship
                         fleet[validated_user_input_1[0]] = {"Size": int(validated_user_input_2[0]),
                                                             "Quantity": int(validated_user_input_2[1]),
                                                             "Coordinates": []}
@@ -475,121 +792,182 @@ def modify_game_settings_fleet_ad_new_ship(height, width, symbol, fleet):
             print("Values you have entered are not valid. Please enter the correct number of values.")
 
 
-# You would also need the clear_terminal(), print_fleet(), create_map(), and game_adjust_check_if_fleet_fits_on_map() functions, which are not shown here.
+def modify_game_settings_fleet_single_ship(height, width, fleet, gaps_on_map, ship_name):
+    """
+    Allows the user to modify or delete a single existing ship from the fleet.
 
+    Args:
+    - height (int): The height of the game map.
+    - width (int): The width of the game map.
+    - fleet (dict): The current state of the fleet.
+    - label_row (list): Current row labels for the game map.
+    - label_column (list): Current column labels for the game map.
+    - gaps_on_map (bool): Current setting for gaps between ships on the map.
+    - ship_name (str): The name of the ship to be modified.
 
-def modify_game_settings_fleet_single_ship(height, width, symbol, fleet, ship_name):
-    # now we have ship name we want to adjust, lets try doing so:
+    Returns:
+    - dict: Updated fleet dictionary if the ship was successfully modified or deleted.
+    """
+
+    # Access the global variable for the default symbol used on the map
+    global DEFAULT_SYMBOL
+
+    # Initialize variables
     ship_size = fleet[ship_name]["Size"]
     ship_qty = fleet[ship_name]["Quantity"]
     input_validation = True
     check_result = True
-    while True:
-        try:
-            clear_terminal()
-            if not input_validation:
-                print(" len output text", len(output_text))
-                print(f'You have entered incorrect information')
-                if len(output_text) == 1:
-                    print(output_text)
-                else:
-                    for i in range(len(validated_user_input)):
-                        print(output_text[i])
-            if check_result == False:
-                print(f' I am sorry but i am strugling to fit given ship \u001b[33m{ship_name}\u001b[0m with size \u001b[33m{validated_user_input[0]}\u001b[0m and quantity \u001b[33m{validated_user_input[1]}\u001b[0m on fleet')
-            print(
-                f"You have selected Ship \u001b[33m{ship_name}\u001b[0m  and it size is \u001b[33m{ship_size}\u001b[0m cells. There are \u001b[33m{ship_qty}\u001b[0m such ships in the current fleet.")
 
-            print("If you want to delete the ship, type 'D' and press enter.")
-            print("To change the ship SIZE and Quantity, enter 2 digits separated by a comma.")
-            print("Example: 2,1")
-            print("To go back, type 0 (zero).")
-            user_input = input().strip().upper()
-            # Handle empty input
+    # Start an infinite loop for user interaction
+    while True:
+
+        try:
+            # Clear terminal screen for a fresh view
+            clear_terminal()
+
+            # Create a temporary map and deep copy of the fleet for demonstration
+            tmp_map = create_map(height, width, DEFAULT_SYMBOL)
+            tmp_fleet = copy.deepcopy(fleet)
+
+            # Deploy this temporary fleet onto the temporary map
+            tmp_map, tmp_fleet = cpu_deploy_all_ships(tmp_map, tmp_fleet, gaps_on_map)
+
+            # Display the map and fleet side-by-side
+            print_map_and_fleet_aligned_columns(tmp_map, tmp_fleet, "Map Example", 10)
+
+            # Display validation and fitting errors, if any
+            if not input_validation:
+                print("You have entered incorrect information.")
+                for i in range(len(validated_user_input)):
+                    print(output_text[i])
+
+            if not check_result:
+                print(f'Cannot fit the ship {ship_name} with size {validated_user_input[0]} and quantity {validated_user_input[1]} into the current fleet.')
+
+            # Reseting Validations
+            input_validation = True
+            check_result = True
+
+            # Display current ship details
+            print(f"You have selected the ship {ship_name}. It has a size of {ship_size} cells and there are {ship_qty} such ships in the current fleet.")
+
+            # Capture user's next action
+            user_input = input("To delete the ship, type 'D'. To modify, enter size and quantity (e.g., 2,1). To go back, type 0: ").strip().upper()
+
+            # Validate user input
             if not user_input:
-                print("Invalid input. Please type something, not just press ENTER. If you want to go back, type 0 and press ENTER")
+                print("Invalid input. Please try again.")
             elif user_input == "D":
                 del fleet[ship_name]
                 return fleet
-                # Go back to ship selection
             elif user_input == "0":
                 return fleet
-            # Modify ship details
             else:
-                # now we will validate user input
-                validation_result, validated_user_input, output_text = validate_user_input(user_input,2,"integer")
-                if validation_result == True:
+                validation_result, validated_user_input, output_text = validate_user_input(user_input, 2, "integer")
+
+                # If input is valid, attempt to modify the ship
+                if validation_result:
                     tmp_fleet = copy.deepcopy(fleet)
-                    tmp_map = create_map(height, width, symbol)
+                    tmp_map = create_map(height, width, DEFAULT_SYMBOL)
                     tmp_fleet[ship_name]["Size"] = int(validated_user_input[0])
                     tmp_fleet[ship_name]["Quantity"] = int(validated_user_input[1])
 
-                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet)
-                    if check_result == True:
-                        print("check result is true")
-                        fleet[ship_name]["Size"] = validated_user_input[0]
-                        fleet[ship_name]["Quantity"] = validated_user_input[1]
+                    # Check if the modified fleet fits on the map
+                    check_result = game_adjust_check_if_fleet_fits_on_map(tmp_map, tmp_fleet, gaps_on_map)
+
+                    if check_result:
+                        fleet[ship_name]["Size"] = int(validated_user_input[0])
+                        fleet[ship_name]["Quantity"] = int(validated_user_input[1])
                         return fleet
                 else:
                     input_validation = False
-                    continue
+
         except ValueError:
-                print("Values you have entered are not valid. Please enter 2 digits separated by a comma.")
+            print("Invalid input. Please enter size and quantity as two digits separated by a comma.")
 
 
 # Functions for checking and validating
-#------------------------------------------------------
-
-def game_adjust_check_if_fleet_fits_on_map(map, fleet):
-    # Declare global variables accessed within the function
-    for i in range(50): # will cycle 50 times, if there is any luck to deploy ships with curent configuration, loop will be interupted and returned True
-        tmp_fleet = copy.deepcopy(fleet)
-        print("above should be fleet no coordinates")
-        result = cpu_deploy_all_ships(map, tmp_fleet)
-        if result != False:
-            return True
-        else:
-            print("this is another not true result")
-            return False
+#--------------------------------------
 
 
-def validate_user_input(input, parts, type=None):
+def game_adjust_check_if_fleet_fits_on_map(map, fleet, gaps_on_map):
     """
-    Splits user input into the specified number of parts and optionally verifies their type.
+    Checks if the entire fleet can be deployed on the given map.
 
-    Parameters:
-        input: The string input provided by the user.
-        parts: The number of parts to split the input into.
-        type: The expected type of each part (currently only 'integer' is supported).
+    This function attempts to deploy the fleet on the map multiple times.
+    If it succeeds at least once, it returns True. Otherwise, it returns False.
+
+    Args:
+    - map (list of lists): The game map represented as a 2D list.
+    - fleet (dict): The current state of the fleet.
 
     Returns:
-        A tuple containing a validity flag, the parts if successful, and an output text list.
+    - bool: True if the fleet can be deployed on the map, False otherwise.
     """
 
-    # Split the input by any non-alphanumeric character
-    split_input = re.split(r'\W+', input)
+    # Loop 50 times to try and fit the fleet on the map
+    # This accounts for the randomness in ship placement
+    for i in range(50):
+        # Create a deep copy of the fleet for temporary manipulation
+        tmp_fleet = copy.deepcopy(fleet)
 
-    # Remove any empty strings from the list
-    split_input = [s for s in split_input if s]
+        # Try to deploy all ships in the fleet onto the map
+        # The 'cpu_deploy_all_ships' function returns False if deployment is not possible
+        result = cpu_deploy_all_ships(map, tmp_fleet, gaps_on_map)
 
-    input_valid = True  # Initialize validity flag
-    output_text = []  # Initialize output text list
+        # If deployment was successful, break the loop and return True
+        if result != False:
+            return True
 
-    # Check if the number of parts matches the expected number
+    # If we've gone through all 50 attempts without success, return False
+    print("Unable to fit the fleet on the map after 50 attempts.")
+    return False
+
+
+
+def validate_user_input(input_str, parts, type=None):
+    """
+    Validates user input by splitting it into a specified number of parts and optionally verifies their type.
+
+    Parameters:
+        input_str (str): The user-provided input string.
+        parts (int): The expected number of parts to split the input into.
+        type (str, optional): The expected data type for each part, currently supports only 'integer'.
+
+    Returns:
+        tuple: A tuple containing three elements:
+            - A boolean indicating if the input is valid.
+            - A tuple of the split parts.
+            - A list of string messages indicating the validation status for each part.
+    """
+
+    # Use a regular expression to split the input into parts by any non-alphanumeric character,
+    # while also removing any empty strings.
+    split_input = re.split(r'[^A-Za-z0-9]+', input_str)
+    # Initialize a flag to keep track of whether the entire input is valid
+    input_valid = True
+
+    # Initialize a list to hold text that describes the validation status for each part
+    output_text = []
+
+    # Check if the number of parts obtained from the split operation matches the expected number of parts
     if len(split_input) != parts:
-        output_text.append(f"Input should be split into \u001b[33m{parts}\u001b[0m parts.")
+        output_text.append(f"Input should be split into {parts} parts.")
         return False, tuple(split_input), output_text
 
-    # If a type is specified, validate each part
+    # If a specific data type is expected for each part, perform type validation
     if type == 'integer':
         for i, part in enumerate(split_input):
+            # Check if the part is an integer
             if not part.isdigit():
-                output_text.append(f'Your input \u001b[33m{part}\u001b[0m is NOT an Integer.')
-                input_valid = False  # Set validity flag to False if any part fails
+                output_text.append(f'Your input "{part}" is NOT an Integer.')
+                input_valid = False  # Mark the input as invalid if even one part fails the type check
             else:
-                output_text.append(f'Your input \u001b[33m{part}\u001b[0m is an Integer.')
+                output_text.append(f'Your input "{part}" is an Integer.')
+                # Convert the part to an integer for future use
                 split_input[i] = int(part)
 
+    # Return the final validity flag, the tuple of validated parts, and the list of validation messages
     return input_valid, tuple(split_input), output_text
 
 
@@ -614,6 +992,8 @@ def create_map(width, height, symbol):
 # Print functions
 #----------------
 
+
+
 def print_fleet(fleet):
     """Print the fleet information in a formatted manner.
 
@@ -628,6 +1008,7 @@ def print_fleet(fleet):
         quantity = ship_details["Quantity"]
         print("{:<20} {:<10} {:<10} ".format(
             ship, size, quantity))
+
 
 
 
@@ -647,6 +1028,8 @@ def print_fleet_with_coodinates(fleet):
         print("{:<20} {:<10} {:<10} {:<50}".format(
             ship, size, quantity, coordinates))
 
+
+
 def print_map(game_map):
     """
     Print the game map in a human-readable format.
@@ -659,7 +1042,9 @@ def print_map(game_map):
     Output:
         The function will print the game map to the console.
     """
+    # Global variables for row and column indexes
     global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+
     # Print column headers (0, 1, 2, ..., N)
     print("   ", end="")
     for col_index in range(len(game_map[0])):
@@ -684,80 +1069,74 @@ def print_map(game_map):
 
 def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
     """
-    Print two 2D maps side by side with labels and a customizable gap.
+    Prints two 2D maps side by side with labels and a customizable gap.
 
     Args:
         map_left (list): A 2D list representing the first map.
         map_right (list): A 2D list representing the second map.
         label_left (str): Label for the first map.
         label_right (str): Label for the second map.
-        gap (int): Number of blank spaces between the two maps. Default is 10.
-    """
+        gap (int): Number of blank spaces between the two maps.
+        label_row (list): List of labels for row indices.
+        label_column (list): List of labels for column indices.
 
-    # Constants for character dimensions and formatting
-    char_width = len("X")  # Width of a single character (assuming monospaced font)
+    """
+    # Global variables for row and column indexes
+    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+
+    # Define character dimensions and formatting
+    char_width = len("X")  # Assuming all characters have the same width
 
     # Calculate the maximum number of digits in row and column indices
     num_digits_map_width = len(str(len(map_left[0])))
     num_digits_map_height = len(str(len(map_left)))
 
-    # Create a string of blank spaces for the gap between maps
+    # Create a string filled with blank spaces to act as a gap between the two maps
     gap_str = ' ' * gap
 
-    # Calculate the left-side offset for aligning map and row indices
+    # Calculate the offset for the row indices, to align them with the map data
     row_index_separator = " | "
     print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
 
-    # Center-align the labels for both maps
-    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
-    label_left_centered = label_left.center(number_char_table_total)
-    label_right_centered = label_right.center(number_char_table_total)
+    # Center-align the map labels based on the total character width of each map
+    total_char_width = len(map_left[0]) * (num_digits_map_width + char_width + 1)
+    label_left_centered = label_left.center(total_char_width)
+    label_right_centered = label_right.center(total_char_width)
 
-    # Print the centered labels for both maps
+    # Print the labels for both maps
     print(f"{print_map_left_offset}{label_left_centered}{gap_str}{print_map_left_offset} {label_right_centered}")
 
-    # Print column headers for both maps
+    # Print column indices for both maps
     print(print_map_left_offset, end=" ")
     for col_index in range(len(map_left[0])):
-        if col_index == len(map_left[0]) - 1:  # Check if it's the last column index
-            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width),
-                  end="")  # i do not want gap after last index, as it will be not aligned
-        else:
-            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
+        # Right-align the column indices and print them without a trailing space for the last index
+        print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width),
+              end=" " if col_index != len(map_left[0]) - 1 else "")
     print(gap_str, print_map_left_offset, end=" ")
     for col_index in range(len(map_right[0])):
-        # Right-justify the column index with proper spacing
         print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
     print()
-    # Print the horizontal separator line
-    # This step prints a separator line to visually separate the maps
+
+    # Print the horizontal separator line for both maps
     separator_length_left = len(map_left[0]) * (num_digits_map_width + char_width + 1)
     separator_length_right = len(map_right[0]) * (num_digits_map_width + char_width + 1)
     print(print_map_left_offset + "=" * separator_length_left, end=gap_str)
     print(" " + print_map_left_offset + "=" * separator_length_right)
 
-    # Loop through each row to print map values
+    # Print the actual map data for both maps
     for row_index, (row_left, row_right) in enumerate(zip(map_left, map_right)):
-        # Print row for the left map
+        # Printing the left map
         print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_left:
-            width = len(str(value))
-            # Right-justify the map value with proper spacing
-            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
-        # Insert the gap between the two maps
+            print(f"{value}".rjust(num_digits_map_height + char_width), end=" ")
+        # Insert gap between maps
         print(gap_str, end="")
-        # Print row for the right map
+        # Printing the right map
         print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_right:
-            width = len(str(value))
-            # Right-justify the map value with proper spacing
-            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+            print(f"{value}".rjust(num_digits_map_height + char_width), end=" ")
         # Move to the next line
         print()
-
-
-
-
 
 
 def print_map_and_list(map_left, instructions, label_left, gap=10):
@@ -770,6 +1149,8 @@ def print_map_and_list(map_left, instructions, label_left, gap=10):
         label_left (str): Label for the first map.
         gap (int): Number of blank spaces between the map and the instructions. Default is 10.
     """
+    # Global variables for row and column indexes
+    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
 
     # Constants for character dimensions and formatting
     char_width = len("X")  # Width of a single character (assuming monospaced font)
@@ -831,6 +1212,8 @@ def print_map_and_fleet_aligned_columns(map_left, fleet, label_left, gap=10):
         label_left (str): Label for the first map.
         gap (int): Number of blank spaces between the map and the fleet information. Default is 10.
     """
+    # Global variables for row and column indexes
+    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
 
     # Constants for character dimensions and formatting
     char_width = len("X")  # Width of a single character (assuming monospaced font)
@@ -896,14 +1279,13 @@ def print_map_and_fleet_aligned_columns(map_left, fleet, label_left, gap=10):
             print()
 
 
-
 def print_aligned_log(log_data, gap=10):
     """
-    Print log data in aligned columns with predefined labels and customizable gap.
+    Prints log data in aligned columns with predefined labels and a customizable gap.
 
     Args:
-        log_data (list): A list of log entries, where each entry is a list containing
-            information about the player, time, row, column, and result.
+        log_data (list): A list of log entries. Each entry is a list containing
+                         information about the player, time, row, column, and result.
         gap (int): Number of blank spaces between the log columns. Default is 10.
 
     Example:
@@ -913,212 +1295,549 @@ def print_aligned_log(log_data, gap=10):
     # Predefined labels for the columns
     labels = ['Player', 'Time', 'Row', 'Column', 'Result']
 
-    # Calculate the maximum width for each column
+    # Calculate the maximum width for each column to align the data
     max_widths = [0] * len(labels)
     for i in range(len(labels)):
         max_widths[i] = max(len(labels[i]), max(len(str(entry[i])) for entry in log_data))
 
-    # Create a string of blank spaces for the gap between columns
+    # Create a string filled with blank spaces for the gap between columns
     gap_str = ' ' * gap
 
-    # Print headers with aligned columns and labels
+    # Print the header row with labels, aligning each column based on its maximum width
     header_str = " | ".join(f"{labels[i]:<{max_widths[i]}}" for i in range(len(labels)))
     print(header_str)
 
-    # Print log entries with aligned columns
+    # Print each log entry, aligning each column based on its maximum width
     for entry in log_data:
         entry_str = " | ".join(f"{str(entry[i]):<{max_widths[i]}}" for i in range(len(entry)))
         print(entry_str)
 
+    # No return statement is needed as the function prints directly to the console
+
 
 # User Game Play Functions
 #-------------------------
-def player_shoot_Input(map_display, map_hidden, enemy_fleet):
+
+
+def player_shoot_input(map_display, map_hidden, enemy_fleet):
+    """
+    Handles the player's shooting action by taking input coordinates and updating the game state.
+
+    Args:
+        map_display (list): The 2D map that is visible to the player.
+        map_hidden (list): The hidden 2D map containing the actual game state.
+        enemy_fleet (dict): The enemy fleet's information.
+
+    Returns:
+        None: The function prints the game state and updates it in-place.
+    """
+
+    # Global variables for row and column indexes and the CPU's shot log
     global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES, cpu_shot_log_tmp
+
+    # Flag to track whether the user's input is valid
     input_validation = True
+    coordinate_value_correct = True
+
     while True:
         try:
+            # If the last input was invalid, print an error message
             if input_validation == False:
                 print(f' Please enter JUST 2 values, as you have entered {len(input_values)}')
+            if coordinate_value_correct == False:
+                print(coordinate_return_message)
+
+            # Prompt the user for coordinates to shoot at
             print(f'Please enter coordinates to shoot, Row and Column, in this pattern')
+
+            # Resweting Flag to track whether the user's input is valid
+            input_validation = True
             user_input = input()
-            #checking if user entered 2 values:
-            input_validation, input_values, output_text = validate_user_input(user_input,2)
-            if input_validation == True:
-                row, column = input_validation
-                #now checking if entered indexes are present on row and column
+
+            # Validate the user's input to ensure it contains exactly two values
+            input_validation, input_values, output_text = validate_user_input(user_input, 2)
+
+            # Determine the correct input type based on MAP_ROW_INDEXES and MAP_COLUMN_INDEXES.
+            input_row = get_corrected_input(input_values[0], MAP_ROW_INDEXES)
+            input_column = get_corrected_input(input_values[1], MAP_COLUMN_INDEXES)
+
+            if input_row in MAP_ROW_INDEXES:
+                row = MAP_ROW_INDEXES.index(input_row)
+                row_value_correct = True
+                row_return_message = ""
+            else:
+                row_value_correct = False
+                row_return_message = f'There is no such Row on current map with index {input_row}'
+
+            if input_column in MAP_COLUMN_INDEXES:
+                column = MAP_COLUMN_INDEXES.index(input_column)
+                column_value_correct = True
+                column_return_message = ""
+            else:
+                column_value_correct = False
+                column_return_message = f'There is no such Column on current map with index {input_column}'
+
+            # Now we will add both validation, and if both are true, cdde will continu, otherwise it will trigger error and print out
+            coordinate_value_correct = row_value_correct and column_value_correct
+
+            # Creating return message if it needs to be printed out
+            if row_return_message and column_return_message:
+                coordinate_return_message = row_return_message + "\n" + column_return_message
+            else:
+                coordinate_return_message = row_return_message + column_return_message
+
+
+            # If the input is valid
+            if coordinate_value_correct == True:
+
                 if row in MAP_ROW_INDEXES:
                     row_index = MAP_ROW_INDEXES.index(row)
                     column_index = MAP_COLUMN_INDEXES.index(column)
-                    coordinates_check = player_shoot_coordinates_check(row_index,column_index,map_hidden)
+
+                    # Check if the coordinates are already shot at
+                    coordinates_check = player_shoot_coordinates_check(row_index, column_index, map_hidden)
+
+            # If the coordinates are valid and haven't been shot at, perform the shooting action
             if coordinates_check == True:
-                action_perform_shoot("Player", row_index, column_index, map_display, map_hidden, enemy_fleet, cpu_shot_log_tmp)
+                action_perform_shoot("Player", row_index, column_index, map_display, map_hidden, enemy_fleet,
+                                     cpu_shot_log_tmp)
 
-
+        # Handle keyboard interrupts to exit the game gracefully
         except KeyboardInterrupt:
             print("Game adjustment interrupted.")
             return False
 
+
 def player_shoot_coordinates_check(row, column, gam_map):
+    """
+    Checks if the provided coordinates have already been targeted.
+
+    Args:
+        row (int): Row index on the game map.
+        column (int): Column index on the game map.
+        gam_map (list): The 2D array representing the game map.
+
+    Returns:
+        bool: True if the coordinates are valid for shooting, False otherwise.
+    """
+
+    # Access the global variables
     global DEFAULT_SYMBOL, game_actions_log
+
+    # Initialize result flag to True
     check_result = True
-    if gam_map[row,column] == DEFAULT_SYMBOL:
+
+    # Check if the coordinate on the game map is the default symbol (meaning not yet targeted)
+    if gam_map[row][column] == DEFAULT_SYMBOL:
         check_result = True
+
+    # Loop through the game action logs to see if this coordinate has already been targeted
     for log in game_actions_log:
         if row == log[3] and column == log[4]:
-            check_result = False
+            check_result = False  # Set result flag to False if coordinate has been targeted
+
+    # Print a message if the player is allowed to shoot at this coordinate
     if check_result == True:
         print("player move to shoot")
-    return check_result
 
-def player_deploy_all_ships(map_display, map_hidden, fleet):
+    return check_result  # Return the result flag
+
+
+def player_deploy_all_ships(map_display, map_hidden, fleet, gaps_on_map):
+    """
+    Deploys all ships for the player on the given maps.
+
+    Args:
+        map_display (list): The 2D array representing the display map.
+        map_hidden (list): The 2D array representing the hidden map.
+        fleet (dict): A dictionary containing the details of the fleet.
+        gamps_on_map (int): The gaps between ships on the map.
+
+    Returns:
+        tuple: Updated map_display and fleet dictionary with deployed ship coordinates.
+    """
+
+    # Access the global variables for default and ship symbols
     global DEFAULT_SYMBOL, SHIP_SYMBOLS
+
+    # Loop through each ship type in the fleet
     for ship_name, ship_info in fleet.items():
+
+        # Extract the quantity and size for each ship type
         quantity = ship_info["Quantity"]
         size = ship_info["Size"]
+
+        # Loop to deploy each ship of the current type
         for i in range(quantity):
-            map_display, map_hidden , coordinates_list = player_deploy_single_ship(map_display, map_hidden, ship_name, size)
+            # Deploy a single ship and get updated maps and coordinates
+            map_display, map_hidden, coordinates_list = player_deploy_single_ship(
+                map_display, map_hidden, ship_name, size, gaps_on_map, fleet)
+
+            # Append the coordinates of the deployed ship to the fleet dictionary
             fleet[ship_name]["Coordinates"].append(coordinates_list)
+
+    # Return the updated display map and fleet dictionary
     return map_display, fleet
 
 
+def player_deploy_single_ship(map_display, map_hidden, ship_name, ship_size, gaps_on_map, fleet):
+    """
+    Handles the deployment of a single ship for the player on the game board.
 
+    Args:
+        map_display (list): 2D list representing the display map.
+        map_hidden (list): 2D list representing the hidden map.
+        ship_name (str): The name of the ship to be deployed.
+        ship_size (int): The size of the ship.
+        gaps_on_map (bool): Flag to indicate if gaps are allowed between ships on the map.
 
-def player_deploy_single_ship(map_display, map_hidden, ship_name, ship_size):
-    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES
+    Returns:
+        tuple: Returns updated display map, hidden map, and coordinates list where the ship is deployed.
+    """
+    global MAP_ROW_INDEXES, MAP_COLUMN_INDEXES  # Global constants for row and column indexes
+    # Initialization of various validation flags
+
     input_validation = True
-    row_value_correct = True
-    column_value_correct = True
-    alignment_valid = True
+    coordinate_value_correct = True
+    alignment_value_correct = True
     map_check_result = True
-    while True:
-        try:
-            if input_validation == False:
-                print(output_values_message)
-            if row_value_correct == False:
-                print(row_output_message)
-            if column_value_correct == False:
-                print(column_output_message)
-            if alignment_valid == False:
-                print(alignment_mistake_message)
-            if map_check_result == False:
-                print(message_ship_does_not_fit)
-            user_input = input()
-            # by ship size we check for 2 or 3 values, if single ship, just coordinates, if bigger ship: coordinates + alignment
-            if ship_size == 1:
-                input_validation, input_values, output_values_message = validate_user_input(user_input, 2)
-            elif ship_size >= 1:
-                input_validation, input_values, output_values_message = validate_user_input(user_input, 3)
-                # new we check if last 3rd value is letter and is it Vertical or Horizontal, coordinates we will check below
-                alignment_text = input_values[2]
-                if alignment_text.lower() == "v":
-                    alignment = "Vertical"
-                elif alignment_text.lower() == "h":
-                    alignment = "Horizontal"
-                # Constants for known orientations and threshold
-                vertical_string = 'vertical'
-                horizontal_string = 'horizontal'
-                string_threshold = 2  # You can adjust this value to be more or less strict
-                # Normalize the user input to lowercase for easier comparison
-                normalized_alignment = alignment_text.lower()
-                distance_to_vertical = levenshtein_distance(vertical_string,normalized_alignment)
-                distance_to_horizontal = levenshtein_distance(horizontal_string, normalized_alignment)
-                if distance_to_vertical <= string_threshold and distance_to_vertical <= distance_to_horizontal:
-                    alignment = "Vertical"
-                    row_value_correct = True
-                elif distance_to_horizontal <= string_threshold and distance_to_horizontal <= distance_to_vertical:
-                    alignment = "Horizontal"
-                    column_value_correct = True
-                else:
-                    alignment_valid = False
-                    alignment_mistake_message = f' I am sorry but i can not determinate what alignment you hhave shosen by your letters {input_values[2]}'
-            # now if ammount of values is correct, we check if row and column are within map boundaries
-            if input_validation == True:
-                input_first_two_values = input_values[0] + "," + input_values[1]
-                input_validation_is_integer, row_column, row_column_output = validate_user_input(input_first_two_values, 2, "integer")
-                if input_validation_is_integer == True:
-                    if row_column[0] in MAP_ROW_INDEXES:
-                        row = MAP_ROW_INDEXES.index(row_column[0])
-                        row_value_correct = True
-                    else:
-                        row_output_message = f' I am sorry to say, but there is no such {row} on current map'
-                        row_value_correct = False
-                    if row_column[1] in MAP_COLUMN_INDEXES:
-                        column = MAP_COLUMN_INDEXES.index(row_column[1])
-                        column_value_correct = True
-                    else:
-                        column_output_message = f' I am sorry to say, but there is no such {column} on current map'
-                        column_value_correct = False
-            # now checking if all input is valid, and user made no typos, then we will check if those coordinates are valid on map:
-            if row_value_correct == True and column_value_correct == True and alignment_valid == True:
-                # creating of coordinates list:
-                coordinates_list = create_coordinate_list(row, column, alignment, ship_size)
-                map_check_result = player_deploy_single_ship_check_map_space(map_hidden, coordinates_list)
-                if map_check_result == True:
-                    # We will deploy ships on hidden and display maps, then if gaps between ships are enabled, we will remove Miss symbols from display map
-                    # But we keep Misss symbols on hidden map, so when player deploys next shipp, we rely on hidden map, but player does not see it.
 
-                    # deploy ship on hidden map
-                    map_hidden = map_show_ship_or_symbols(map_hidden, coordinates_list, alignment)
-                    # deploy ships on display map
-                    map_display = map_show_ship_or_symbols(map_display, coordinates_list, alignment)
-                    # hide any symbols from display map and show only ships. This is needed if there is gaps between ships
+    while True:  # Main loop for user interaction
+
+        try:
+            clear_terminal()
+            print_map_and_fleet_aligned_columns(map_display,fleet, "Player Map", 10)
+            if ship_size == 1:
+                print(f'Please enter  2 values: coordinates (Row, Column) for ship {ship_name} deployment')
+            else:
+                print(f'Please enter 3 values: coordinates (Row, Column) for ship {ship_name} deployment and alignment')
+
+            # Display error messages based on the flags
+            if not input_validation:
+                print(output_values_message)
+            if not coordinate_value_correct:
+                print(coordinate_return_message)
+            if not alignment_value_correct:
+                print(alignment_mistake_message)
+            if not map_check_result:
+                print(message_ship_does_not_fit)
+
+            input_validation = True
+            coordinate_value_correct = True
+            alignment_value_correct = True
+            map_check_result = True
+
+
+            # Collect user input
+            user_input = input()
+            # checking if user has entered any information
+            if len(user_input)>0:
+
+                # Validate input based on ship size
+                # If ship size = 1, then we just allocate alignment, as it is irrelevant
+                if ship_size == 1:
+                    input_validation, input_values, output_values_message = validate_user_input(user_input, 2)
+                    alignment = "Single"
+
+                # If ship size is more then 1 cell, we neet to validate, it is 3 values entered
+                elif ship_size > 1:
+                    input_validation, input_values, output_values_message = validate_user_input(user_input, 3)
+                    # Now we check if last 3rd value is letter and is it Vertical or Horizontal, coordinates we will check below
+                    alignment_text = input_values[2]
+
+                    # If user entered just one letter, we will try to get alignment
+                    if alignment_text.lower() == "v":
+                        alignment = "Vertical"
+                    elif alignment_text.lower() == "h":
+                            alignment = "Horizontal"
+
+                    # If alignment can not be detected, or it is complicated string:
+                    else:
+                        alignment_value_correct, alignment, alignment_mistake_message = user_input_detect_alignment(alignment_text)
+
+            # Alignment is sorted, now we check coordinates:
+            # Determine the correct input type based on MAP_ROW_INDEXES and MAP_COLUMN_INDEXES.
+            input_row = get_corrected_input(input_values[0], MAP_ROW_INDEXES)
+            input_column = get_corrected_input(input_values[1], MAP_COLUMN_INDEXES)
+
+            if input_row in MAP_ROW_INDEXES:
+                row = MAP_ROW_INDEXES.index(input_row)
+                row_value_correct = True
+                row_return_message = ""
+            else:
+                row_value_correct = False
+                row_return_message = f'There is no such Row on current map with index {input_row}'
+
+            if input_column in MAP_COLUMN_INDEXES:
+                column = MAP_COLUMN_INDEXES.index(input_column)
+                column_value_correct = True
+                column_return_message = ""
+            else:
+                column_value_correct = False
+                column_return_message = f'There is no such Column on current map with index {input_column}'
+
+            # Now we will add both validation, and if both are true, cdde will continu, otherwise it will trigger error and print out
+            coordinate_value_correct = row_value_correct and column_value_correct
+
+            # Creating return message if it needs to be printed out
+            if row_return_message and column_return_message:
+                coordinate_return_message = row_return_message + "\n" + column_return_message
+            else:
+                coordinate_return_message = row_return_message + column_return_message
+
+            # If all inputs are valid, proceed to deploy the ship
+            if coordinate_value_correct == True and alignment_value_correct == True:
+                coordinates_list = create_coordinate_list(row, column, alignment, ship_size)
+                map_check_result , message_ship_does_not_fit= player_deploy_single_ship_check_map_space(map_hidden, coordinates_list)
+
+                if map_check_result:
+                       # Deploy the ship and update maps
+                    map_hidden = map_show_ship_or_symbols(map_hidden, coordinates_list, alignment, gaps_on_map)
+                    map_display = map_show_ship_or_symbols(map_display, coordinates_list, alignment, gaps_on_map)
                     map_display = map_show_only_ships(map_display)
                     return map_display, map_hidden, coordinates_list
-
-                else:
-                    if ship_size == 1:
-                        mesage_string_for_alignment = ""
-                    else:
-                        mesage_string_for_alignment = f' with alignment {alignment}'
-                    message_ship_does_not_fit = f' I am sorry to say, but your given {ship_name} does not fit on current map with given coordinates Row: {row} and Column{column} {mesage_string_for_alignment}'
-
+            else:
+                continue
+            if not user_input:
+                continue
 
         except ValueError:
             print("Values you have entered are not valid. Please enter the correct number of values.")
 
 
+def get_corrected_input(input_value, map_indexes):
+    """
+    Converts the user input to the appropriate type based on the type of indexes used in the map.
+
+    The function checks the type of the first index in the map_indexes list and then converts
+    the user input to either an integer or a string accordingly.
+
+    Args:
+        input_value (str): The user input value that needs to be converted.
+        map_indexes (list): A list of indexes used in the map, which could be either integers or strings.
+
+    Returns:
+        int or str or None: Returns the converted input value if successful; otherwise returns None.
+    """
+
+    # Check the type of the first element in map_indexes to determine if it's a letter or number.
+    if isinstance(map_indexes[0], int):
+        # If the map uses integer indexes, convert the input to an integer.
+        return int(input_value)
+
+    elif isinstance(map_indexes[0], str):
+        # If the map uses letter indexes, convert the input to lower-case.
+        return input_value.lower()
+
+    else:
+        # Handle other types as needed. For now, return None to indicate unsuccessful conversion.
+        return None
+
+
+def user_input_check_input_is_integer(row, column):
+    """
+    Validates whether the row and column provided by the user are valid integers and exist in MAP_ROW_INDEXES and MAP_COLUMN_INDEXES.
+
+    Args:
+        row (str): The row value entered by the user.
+        column (str): The column value entered by the user.
+
+    Returns:
+        tuple: Returns a tuple containing four elements:
+               1. value_correct (bool): True if both row and column are valid, False otherwise.
+               2. row (int): The index of the row in MAP_ROW_INDEXES.
+               3. column (int): The index of the column in MAP_COLUMN_INDEXES.
+               4. return_message (str): A message explaining why validation failed, if it did.
+    """
+
+    # Initialize the validation flag and message
+    value_correct = False
+    return_message = ""
+
+    # Concatenate row and column inputs for validation
+    input_first_two_values = row + "," + column
+
+    # Validate if the user inputs for row and column are integers
+    input_validation_is_integer, row_column, row_column_output = validate_user_input(input_first_two_values, 2,
+                                                                                     "integer")
+
+    # If the inputs are valid integers, proceed to specific row and column validation
+    if input_validation_is_integer:
+
+        # Validate the row against MAP_ROW_INDEXES
+        if row_column[0] in MAP_ROW_INDEXES:
+            row = MAP_ROW_INDEXES.index(row_column[0])
+            value_correct = True
+            return_message = ""
+        else:
+            value_correct = False
+            return_message = f'I am sorry, but there is no such {row} on the current map'
+
+        # Validate the column against MAP_COLUMN_INDEXES
+        if row_column[1] in MAP_COLUMN_INDEXES:
+            column = MAP_COLUMN_INDEXES.index(row_column[1])
+            value_correct = True
+            return_message = ""
+        else:
+            value_correct = False
+            return_message = f'I am sorry, but there is no such {column} on the current map'
+
+    # If the inputs are not integers, set the validation flag to False and prepare an error message
+    else:
+        value_correct = False
+        return_message = f'I am sorry, but values you have typed in are not integers'
+
+    # Return the final validation flag, row and column indices, and any return messages
+    return value_correct, row, column, return_message
+
+
+def user_input_detect_alignment(alignment_text):
+    """
+    Determine the alignment based on user input.
+
+    This function uses Levenshtein distance to match the user input to known
+    orientations ('Vertical' and 'Horizontal'). It iterates through a range of
+    thresholds to find the best match.
+
+    Args:
+        alignment_text (str): The user's input text for alignment.
+
+    Returns:
+        tuple: A tuple containing:
+            - alignment_valid (bool): Whether the alignment could be determined.
+            - alignment (str): The determined alignment ('Vertical' or 'Horizontal').
+            - alignment_mistake_message (str): A message for the case when alignment could not be determined.
+    """
+
+    # Normalized constants for known orientations
+    vertical_string = 'vertical'
+    horizontal_string = 'horizontal'
+
+
+
+    # Normalize the user input for easier comparison
+    normalized_alignment = alignment_text.lower()
+
+    # Check for starting substring match (abbreviations)
+    if vertical_string.startswith(normalized_alignment):
+        return True, "Vertical", ""
+    elif horizontal_string.startswith(normalized_alignment):
+        return True, "Horizontal", ""
+
+    # Initialize result variables
+    alignment = ""
+    alignment_valid = False
+    alignment_mistake_message = ""
+
+    # Iterate through a range of thresholds
+    for threshold in range(1, 5):  # 1 to 4 inclusive, adjust as needed
+        distance_to_vertical = levenshtein_distance(vertical_string, normalized_alignment)
+        distance_to_horizontal = levenshtein_distance(horizontal_string, normalized_alignment)
+
+        if distance_to_vertical <= threshold and distance_to_vertical <= distance_to_horizontal:
+            alignment = "Vertical"
+            alignment_valid = True
+            break
+        elif distance_to_horizontal <= threshold and distance_to_horizontal < distance_to_vertical:
+            alignment = "Horizontal"
+            alignment_valid = True
+            break
+
+    # Handle the case where alignment couldn't be determined
+    if not alignment_valid:
+        alignment_mistake_message = f"I am sorry, but I cannot determine the alignment from the input: {alignment_text}"
+
+    return alignment_valid, alignment, alignment_mistake_message
+
 
 def levenshtein_distance(source_word, target_word):
     """
-    Calculate the Levenshtein distance between two strings: source_word and target_word.
+    Calculate the Levenshtein distance between two strings.
 
-    Levenshtein distance is a measure of the similarity between two strings, calculated as
-    the minimum number of single-character edits (insertions, deletions, or substitutions)
-    required to change one string into the other.
+    The Levenshtein distance is a measure of the similarity between two strings.
+    It is calculated as the minimum number of single-character edits needed to
+    transform one string into the other.
 
-    Parameters:
-    - source_word (str): The original string from which to calculate the distance.
-    - target_word (str): The target string to which we want to compare the source string.
+    Args:
+        source_word (str): The source string for comparison.
+        target_word (str): The target string for comparison.
 
     Returns:
-    int: The Levenshtein distance between source_word and target_word.
+        int: The Levenshtein distance between the two strings.
     """
+
+    # If the source word is shorter than the target word, swap them.
     if len(source_word) < len(target_word):
         return levenshtein_distance(target_word, source_word)
 
+    # Initialize a list of distances. Each index i in this list will eventually
+    # contain the Levenshtein distance between the first i characters of source_word
+    # and the first j characters of target_word.
     distances = list(range(len(source_word) + 1))
-    for target_index, target_char in enumerate(target_word):
-        new_distances = [target_index + 1]
-        for source_index, source_char in enumerate(source_word):
-            if source_char == target_char:
-                new_distances.append(distances[source_index])
-            else:
-                new_distances.append(1 + min((distances[source_index], distances[source_index + 1], new_distances[-1])))
-        distances = new_distances
-    return distances[-1]
 
+    # Loop through each character in the target word.
+    for target_index, target_char in enumerate(target_word):
+        # Initialize a new list of distances for this iteration.
+        new_distances = [target_index + 1]
+
+        # Loop through each character in the source word.
+        for source_index, source_char in enumerate(source_word):
+            # If the characters match, the cost is zero, otherwise the cost is one.
+            cost = 0 if source_char == target_char else 1
+
+            # The new distance is the minimum between deleting from source,
+            # deleting from target, or substituting.
+            new_distance = min(
+                distances[source_index] + 1,  # Deletion
+                distances[source_index + 1] + 1,  # Insertion
+                distances[source_index] + cost  # Substitution
+            )
+            new_distances.append(new_distance)
+
+        # Update the list of distances.
+        distances = new_distances
+    print("leven distances", distances[-1], "source:", source_word, "target", target_word)
+    return distances[-1]  # The last element is the Levenshtein distance between the two full words.
 
 
 def player_deploy_single_ship_check_map_space(game_map, coordinates_list):
-    global DEFAULT_SYMBOL
-    #function to check if that space is empty on map
+    """
+    Check if a ship can be deployed at the given coordinates on the game map.
+
+    This function checks if the specified coordinates on the game map are empty,
+    allowing for the ship to be deployed.
+
+    Args:
+        game_map (list): The 2D list representing the game map.
+        coordinates_list (list): A list of tuples, each containing the row and column index.
+
+    Returns:
+        bool: True if the ship can be deployed, False otherwise.
+    """
+    global DEFAULT_SYMBOL  # Use the globally defined default symbol for an empty cell
+
+    # Initialize variable to True. Will set to False if any coordinate is occupied.
     checking_ship_fits_on_map = True
+
+    # Loop through each coordinate in the list
     for coordinate in coordinates_list:
-        row, column = coordinate
-        if game_map[row][column] != DEFAULT_SYMBOL:
+        row, column = coordinate  # Unpack the tuple into row and column
+
+        # Checking if coordinates are within map boundaries
+        if 0 <= row < len(game_map) and 0 <= column < len(game_map[0]):
+
+            # If coordinates are within map, we check if it is empty space
+            if game_map[row][column] != DEFAULT_SYMBOL:
+                checking_ship_fits_on_map = False  # Set to False as the cell is occupied
+                message_text = f' sorry but it appears there is another ship there, choose different coordinates'
+            else:
+                message_text = ""
+        else:
             checking_ship_fits_on_map = False
-            return checking_ship_fits_on_map
+            message_text = f' sorry but with given coordinates, this part of ship {row}, {column} will be out of map boundaries'
+
+    # If the loop completes, the ship fits and the function will return True
+    return checking_ship_fits_on_map, message_text
 
 
 
@@ -1126,117 +1845,170 @@ def player_deploy_single_ship_check_map_space(game_map, coordinates_list):
 #---------------------------
 
 
-def create_coordinate_list(row, column,alignment,ship_size):
+def create_coordinate_list(row, column, alignment, ship_size):
+    """
+    Create a list of coordinates where the ship will be placed on the map.
+
+    This function generates a list of coordinates based on the starting row and column,
+    the alignment of the ship, and the size of the ship.
+
+    Args:
+        row (int): The starting row index for the ship.
+        column (int): The starting column index for the ship.
+        alignment (str): The orientation of the ship ("Horizontal" or "Vertical").
+        ship_size (int): The size of the ship.
+
+    Returns:
+        list: A list of coordinates where the ship will be placed.
+    """
+
+    # Initialize an empty list to store the coordinates
     coordinates_list = []
+
+    # If the ship size is 1, it only occupies one cell
     if ship_size == 1:
-        coordinates_list.append([row,column])
+        coordinates_list.append([row, column])
+
+    # For larger ships, we need to calculate the additional coordinates based on alignment
     else:
+        # If the ship is aligned horizontally
         if alignment == "Horizontal" or alignment == "HorizontalSunk":
             for cell in range(ship_size):
                 coordinates_list.append([row, column + cell])
+
+        # If the ship is aligned vertically
         if alignment == "Vertical" or alignment == "VerticalSunk":
             for cell in range(ship_size):
                 coordinates_list.append([row + cell, column])
-    return  coordinates_list
+
+    return coordinates_list
+
 
 
 def map_allocate_empty_space_for_ship(game_map, coordinates_list):
     """
-    Creating empty space around ship, so ships can not be touching each other. So function will create pattern of Miss symbols, so when deploying ships, they can not be touching. when deployment of all ships is completed, these symbols will be changed back to DEFAULT_SYMBOL
+    Allocate empty space around a ship on a 2D map.
+
+    This function modifies the given game_map to ensure that ships cannot be
+    deployed touching each other. It marks the empty space around a ship with
+    'Miss' symbols. After all ships are deployed, these symbols will be changed
+    back to DEFAULT_SYMBOL.
 
     Args:
         game_map (list): The 2D map where the ship will be deployed.
-        ship_size (int): The length of the ship.
-        coordinates (list): Starting coordinates [row, column] for the ship.
-        alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
+        coordinates_list (list): List of coordinates where the ship is located.
 
     Global Variables:
         SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
 
     Returns:
-        None
-
+        list: Modified game map with empty spaces around the ship.
     """
 
-    # Use the global variable SHIP_SYMBOLS to get the ship symbols
+    # Access the global variable SHIP_SYMBOLS for ship symbols
     global SHIP_SYMBOLS
 
-    blank_space = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,0],[0,1],[1,-1],[1,0],[1,1]]
+    # Define the relative positions for empty space around a single cell
+    blank_space = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 0], [0, 1], [1, -1], [1, 0], [1, 1]]
 
-
-    #creating big pattern of default symbols
+    # Initialize an empty list to store the coordinates for empty spaces
     blank_space_coordinates_list = []
+
+    # Calculate the actual positions for empty space around each cell of the ship
     for space in blank_space:
         blank_row, blank_column = space
-        for coordinate in  coordinates_list:
+        for coordinate in coordinates_list:
             new_row, new_column = coordinate
             new_blank_row, new_blank_column = blank_row + new_row, blank_column + new_column
             blank_space_coordinates_list.append([new_blank_row, new_blank_column])
 
-    # now applying all spaces to map
+    # Update the map to allocate empty space around the ship
     for new_space in blank_space_coordinates_list:
         b_row, b_column = new_space
         if 0 <= b_row < len(game_map) and 0 <= b_column < len(game_map[0]):
             game_map[b_row][b_column] = SHIP_SYMBOLS["Miss"][0]
+
     return game_map
 
 
-def map_show_ship_or_symbols(game_map, coordinates_list, alignment):
+def map_show_ship_or_symbols(game_map, coordinates_list, alignment, map_with_gaps=True):
     """
-    Deploy a single ship on the map.
+    Deploy a ship or symbols on a 2D game map.
+
+    This function modifies the 2D game map to show the ship or symbols
+    at the specified coordinates and alignment.
 
     Args:
         game_map (list): The 2D map where the ship will be deployed.
-        length (int): The length of the ship.
-        coordinates (list): Starting coordinates [row, column] for the ship.
+        coordinates_list (list): List of coordinates where the ship is located.
         alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
-        ship_name (str): The name of the ship.
-        fleet (dict): Dictionary containing fleet information.
+        map_with_gaps (bool): Whether to include gaps between ships on the map. Default is True.
 
     Global Variables:
         SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
+        DEFAULT_GAPS_BETWEEN_MAPS (bool): Default setting for gaps between ships.
 
     Returns:
-        list: Nested list of .ship coordinates
+        list: Modified 2D game map with the ship or symbols deployed.
     """
-    # Use the global variable SHIP_SYMBOLS to get the ship symbols
-    global SHIP_SYMBOLS
 
-    # Use the global variable GAPS_BETWEEN_MAPS to get True or False for ships NOT touching
+    # Use global variables for ship symbols and default gap settings
+    global SHIP_SYMBOLS
     global DEFAULT_GAPS_BETWEEN_MAPS
 
-    # Before we start displaying ships on map, if spaces between ships is True, we will allocate blank space, then depliy ships
-    if DEFAULT_GAPS_BETWEEN_MAPS == True:
+    # If gaps are enabled, allocate empty space around the ship before deploying it
+    if map_with_gaps:
         game_map = map_allocate_empty_space_for_ship(game_map, coordinates_list)
 
-
-    # Handle the case for single-cell ships
+    # Case for single-cell ships
     if len(coordinates_list) == 1:
         row, column = coordinates_list[0]
         game_map[row][column] = SHIP_SYMBOLS[alignment][0]
         return game_map
 
-    # Handle the case for multi-cell ships
+    # Case for multi-cell ships
     else:
         row, column = coordinates_list[0]
         game_map[row][column] = SHIP_SYMBOLS[alignment][0]
-        for cell in range(1,len(coordinates_list)):
+
+        # Loop through the rest of the coordinates to place the ship symbols
+        for cell in range(1, len(coordinates_list)):
             row, column = coordinates_list[cell]
             game_map[row][column] = SHIP_SYMBOLS[alignment][1]
+
         return game_map
 
 
 def map_show_only_ships(game_map):
     """
-    function to remove Miss symbols from map and replace them with DEFAULT_SYMBOL, so map shows just ships
-    :param game_map:
-    :return:
+    Replace 'Miss' symbols on the game map with the default symbol.
+
+    This function goes through each cell in the 2D game map and replaces
+    any 'Miss' symbols with the default symbol, effectively showing only ships
+    on the map.
+
+    Args:
+        game_map (list): The 2D game map to be modified.
+
+    Global Variables:
+        SHIP_SYMBOLS (dict): Dictionary containing the symbols for different ship states.
+        DEFAULT_SYMBOL (str): The symbol representing an empty cell on the map.
+
+    Returns:
+        list: The modified 2D game map with only ship symbols.
     """
+
+    # Use global variables for ship symbols and the default symbol
     global SHIP_SYMBOLS, DEFAULT_SYMBOL
+
+    # Loop through each row in the 2D game map
     for row in range(len(game_map)):
+        # Loop through each column in the current row
         for column in range(len(game_map[0])):
+            # If the current cell contains a 'Miss' symbol, replace it with the default symbol
             if game_map[row][column] == SHIP_SYMBOLS["Miss"][0]:
                 game_map[row][column] = DEFAULT_SYMBOL
+
     return game_map
 
 
@@ -1244,47 +2016,55 @@ def map_show_only_ships(game_map):
 # Game logic functions:
 #----------------------
 
+
 def search_map_for_pattern(game_map, height, width):
     """
-    Find all occurrences of a pattern of DEFAULT_SYMBOL in a map and return their coordinates.
+    Search for occurrences of a pattern of DEFAULT_SYMBOL on the map and return their coordinates.
+
+    This function iterates through the game map to find all occurrences of a pattern
+    of DEFAULT_SYMBOL of the specified height and width. The coordinates of the top-left
+    corner of each found pattern are returned.
 
     Args:
-        game_map (List[List[str]]): The map as a nested list.
-        height (int): Height of the pattern to search for.
-        width (int): Width of the pattern to search for.
+        game_map (List[List[str]]): The 2D game map.
+        height (int): The height of the pattern to search for.
+        width (int): The width of the pattern to search for.
+
+    Global Variables:
+        DEFAULT_SYMBOL (str): The default symbol representing an empty cell on the map.
 
     Returns:
-        List[Tuple[int, int]]: A list of coordinates (row, col) where the pattern is found,
-        or an empty list if no pattern is found.
+        List[Tuple[int, int]]: A list of coordinates (row, col) where the pattern is found.
+                               Returns an empty list if no pattern is found.
     """
 
     # Reference the global variable for the default symbol
     global DEFAULT_SYMBOL
-
 
     # Retrieve the dimensions of the game map
     map_height, map_width = len(game_map), len(game_map[0])
 
     # Initialize an empty list to collect coordinates where the pattern is found
     coordinates = []
+
     # Create the pattern using list comprehension
     pattern = [[DEFAULT_SYMBOL] * width for _ in range(height)]
 
     # Traverse the map to find matching patterns
     for row in range(map_height - height + 1):
         for col in range(map_width - width + 1):
+            # Check if the section of the map matches the pattern
             if all(
                 game_map[row + i][col + j] == pattern[i][j]
                 for i in range(height)
                 for j in range(width)
             ):
                 # If the pattern matches, add the coordinates to the list
-                coordinates.append([row, col])
-    # Check if any coordinates were found
-    if not coordinates:
-        return False
-    else:
-        return coordinates
+                coordinates.append((row, col))
+
+    return coordinates  # Return the list of coordinates where the pattern is found
+
+
 
 
 
@@ -1325,46 +2105,106 @@ def find_biggest_ship_in_fleet(fleet):
     return biggest_ship, biggest_ship_size
 
 
+
 def map_search_reduce_width(height, width, game_map):
     """
     Reduce the width dimension and search for the pattern again.
+
+    This function attempts to find a pattern of DEFAULT_SYMBOL on the game map with
+    given dimensions. If not found, it reduces the width by 1 and tries again.
+    If it still doesn't find any, it reduces both height and width by 1.
+
+    Args:
+        height (int): The height of the pattern to search for.
+        width (int): The width of the pattern to search for.
+        game_map (List[List[str]]): The 2D game map.
+
+    Returns:
+        Tuple: Returns the final height, width, and coordinates where the pattern is found.
     """
-    width -= 1  # Decrease the width by 1
-    coordinates = search_map_for_pattern(game_map, height, width)  # Search for pattern
-    print("map_search_reduce_width was searching map for coordinates with height ", height, " and width: ", width, " returned coordinates: ", coordinates)
+
+    # Reduce the width by 1
+    width -= 1
+    # Search for the pattern with the new dimensions
+    coordinates = search_map_for_pattern(game_map, height, width)
+
+    # Debugging information
+    print(f"map_search_reduce_width was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
+
+    # If no coordinates were found
     if coordinates == False:
-        print("we have found no coordinates with height and width: ", height, width)
-        width += 1  # Restore the width back to the original
-        height -= 1  # Decrease the height by 1
-        coordinates = search_map_for_pattern(game_map, height, width)  # Search again
-        print("map_search_reduce_width was searching map for coordinates with height ", height, " and width: ", width,
-              " returned coordinates: ", coordinates)
+        print(f"we have found no coordinates with height and width: {height}, {width}")
+
+        # Restore the width back to the original value
+        width += 1
+        # Decrease the height by 1
+        height -= 1
+
+        # Search for the pattern again with the new dimensions
+        coordinates = search_map_for_pattern(game_map, height, width)
+
+        # Debugging information
+        print(f"map_search_reduce_width was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
+
+        # If still no coordinates were found
         if coordinates == False:
-            print("we have found no coordinates with height and width: ", height, width)
+            print(f"we have found no coordinates with height and width: {height}, {width}")
+            # Now reduce both height and width by 1
+            width -= 1
 
-            width -= 1  # Now reduce both height and width by 1 and return both height and widdth reduced
+    return height, width, coordinates  # Return the final height, width, and found coordinates
 
-    return height, width, coordinates
+
 
 def map_search_reduce_height(height, width, game_map):
     """
     Reduce the height dimension and search for the pattern again.
-    """
-    height -= 1  # Decrease the height by 1
-    coordinates = search_map_for_pattern(game_map, height, width)  # Search for pattern
-    print("map_search_reduce_width was searching map for coordinates with height ", height, " and width: ", width, " returned coordinates: ", coordinates)
-    if coordinates == False:
-        print("we have found no coordinates with height and width: ", height, width)
-        height += 1  # Restore the height back to the original
-        width -= 1  # Decrease the width by 1
-        coordinates = search_map_for_pattern(game_map, height, width)  # Search again
-        print("map_search_reduce_width was searching map for coordinates with height ", height, " and width: ", width,
-              " returned coordinates: ", coordinates)
-        if coordinates == False:
-            print("we have found no coordinates with height and width: ", height, width)
-            height -= 1  # Now reduce both height and width by 1 and return both height and width reduced
 
-    return height, width, coordinates
+    This function attempts to find a pattern of DEFAULT_SYMBOL on the game map with
+    given dimensions. If not found, it reduces the height by 1 and tries again.
+    If it still doesn't find any, it reduces both height and width by 1.
+
+    Args:
+        height (int): The height of the pattern to search for.
+        width (int): The width of the pattern to search for.
+        game_map (List[List[str]]): The 2D game map.
+
+    Returns:
+        Tuple: Returns the final height, width, and coordinates where the pattern is found.
+    """
+
+    # Reduce the height by 1
+    height -= 1
+    # Search for the pattern with the new dimensions
+    coordinates = search_map_for_pattern(game_map, height, width)
+
+    # Debugging information
+    print(f"map_search_reduce_height was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
+
+    # If no coordinates were found
+    if coordinates == False:
+        print(f"we have found no coordinates with height and width: {height}, {width}")
+
+        # Restore the height back to the original value
+        height += 1
+        # Decrease the width by 1
+        width -= 1
+
+        # Search for the pattern again with the new dimensions
+        coordinates = search_map_for_pattern(game_map, height, width)
+
+        # Debugging information
+        print(f"map_search_reduce_height was searching map for coordinates with height {height} and width: {width} returned coordinates: {coordinates}")
+
+        # If still no coordinates were found
+        if coordinates == False:
+            print(f"we have found no coordinates with height and width: {height}, {width}")
+            # Now reduce both height and width by 1
+            height -= 1
+
+    return height, width, coordinates  # Return the final height, width, and found coordinates
+
+
 
 
 def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
@@ -1462,6 +2302,8 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
 
 
+
+
 def find_ship_and_coordinates(fleet, target_coordinates):
     """
     Find the details of the ship and its coordinates in the fleet.
@@ -1496,28 +2338,27 @@ def find_ship_and_coordinates(fleet, target_coordinates):
     return False, False, False, False, False
 
 
-
-
-
-
-
-def cpu_deploy_all_ships(game_map,fleet):
+def cpu_deploy_all_ships(game_map, fleet, gaps_on_map):
     """
     Deploy all CPU ships on the map.
 
-    Global Variables:
+    This function deploys all the CPU's ships on a given game map based on the fleet
+    configuration. It uses various helper functions to find suitable locations and alignments
+    for each ship.
+
+    Args:
+        game_map (list): 2D map for the CPU.
         fleet (dict): Contains the CPU's fleet information.
-        DEFAULT_FLEET (dict): Default settings for the fleet.
-        game_map (list): 2D map for CPU.
+        gaps_on_map (bool): If True, adds gaps between ships.
+        row_labels (list): List of row labels.
+        column_labels (list): List of column labels.
+
+    Global Variables:
         DEFAULT_SYMBOL (str): Default symbol for empty cells.
         SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
 
-    Updates:
-        - fleet: Updated with the ship coordinates.
-        - game_map: Updated with deployed ships.
-
     Returns:
-        None
+        tuple: Updated game_map and fleet with the ship coordinates.
     """
 
     # Declare global variables for function access
@@ -1525,62 +2366,70 @@ def cpu_deploy_all_ships(game_map,fleet):
 
     # Initialize the map with default symbols if not already done
 
-
     # Creating empty list for ship coordinates, which will be appended to fleet later
     ship_coordinates = []
 
     # Iterate through each ship type in the fleet configuration
     for ship_name, ship_info in fleet.items():
-        quantity = ship_info["Quantity"]  # Extract the number of ships of this type
-        size = ship_info["Size"]  # Extract the size of this type of ship
+        quantity = ship_info["Quantity"]  # Number of ships of this type
+        size = ship_info["Size"]  # Size of this type of ship
 
         # Deploy the required number of each ship type
-        for i in range(quantity):
-            # Initialize variables to keep track of the ship's location and alignment
+        for _ in range(quantity):
+            # Variables to keep track of the ship's location and alignment
             location = ""
             alignment = ""
-            # Handle single-cell ships separately
+
+            # Handle single-cell ships
             if size == 1:
                 alignment = "Single"
                 result = search_map_for_pattern(game_map, 1, 1)
                 if result == False:
-                    return False
+                    return False  # Abort if no suitable location is found
 
             else:
                 # Randomly choose alignment for multi-cell ships
                 alignment = random.choice(["Horizontal", "Vertical"])
 
-
                 # Find a suitable location based on the alignment
+                # Try vertical alignment first
                 if alignment == "Vertical":
                     result = search_map_for_pattern(game_map, size, 1)
-                    if result == False: # if no cordinates possible were found with Vertical, we will try Horizontal
+                    if result == False:  # If not found, try horizontal
                         alignment = "Horizontal"
                         result = search_map_for_pattern(game_map, 1, size)
                         if result == False:
-                            return False
+                            return False  # Abort if no suitable location is found
 
+                # Try horizontal alignment
                 elif alignment == "Horizontal":
-                    result = search_map_for_pattern(game_map,1, size)
-                    if result == False: # if no coordinates found with Horizontal, we will try Vertical
+                    result = search_map_for_pattern(game_map, 1, size)
+                    if result == False:  # If not found, try vertical
                         alignment = "Vertical"
                         result = search_map_for_pattern(game_map, size, 1)
-
                         if result == False:
+                            return False  # Abort if no suitable location is found
 
-                            return False
+            # Choose a random suitable location
             location = random.choice(result)
 
             if len(location) == 2:
                 # Deploy the ship at the chosen location
-                coordinates_list = create_coordinate_list(location[0],location[1], alignment, size)
-                map_show_ship_or_symbols(game_map, coordinates_list, alignment)
-                # append ship coordinates to fleet
+                coordinates_list = create_coordinate_list(location[0], location[1], alignment, size)
+                map_show_ship_or_symbols(game_map, coordinates_list, alignment, gaps_on_map)
+
+                # Append ship coordinates to the fleet
                 fleet[ship_name]["Coordinates"].append(coordinates_list)
+
             if len(location) < 2:
-                return False
+                return False  # Abort if no suitable location is found
+
+    # Finalize the map by showing only the ships
     game_map = map_show_only_ships(game_map)
-    return game_map, fleet
+
+    return game_map, fleet  # Return the updated map and fleet
+
+
 
 
 def handle_miss(player, row, column, map_hidden, map_display):
@@ -1625,58 +2474,89 @@ def handle_miss(player, row, column, map_hidden, map_display):
 
 
 
+
 def action_perform_shoot(player, row, column, map_hidden, map_display, fleet, cpu_shot_log_tmp):
     """
     Perform a shooting action on the game board.
+
+    This function performs the action of shooting at a given coordinate on the game board.
+    It uses helper functions to update the map and fleet information based on whether the
+    shot hit a ship or missed.
+
+    Args:
+        player (str): The player who is performing the action.
+        row (int): The row coordinate for the shot.
+        column (int): The column coordinate for the shot.
+        map_hidden (list): The 2D hidden map.
+        map_display (list): The 2D display map.
+        fleet (dict): Dictionary containing fleet information.
+        cpu_shot_log_tmp (list): Temporary log for CPU shots.
+
+    Global Variables:
+        game_actions_log (list): Log of game actions.
+        start_time (datetime): The start time of the game.
+        SHIP_SYMBOLS (dict): Dictionary containing ship symbols.
+
+    Returns:
+        str: "Hit" if the shot hit a ship, "Miss" if the shot missed, and None if an error occurs.
     """
-    global game_actions_log, start_time, SHIP_SYMBOLS  # Declare global variables
+
+    # Declare global variables for function access
+    global game_actions_log, start_time, SHIP_SYMBOLS
 
     # Find the ship details at the given coordinates
     ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id = find_ship_and_coordinates(fleet, [row, column])
 
     try:
-        if ship_name != False:  # If a ship is found at the coordinates
-            print(f'{player} performed shot on coordinates {row} and {column}, {ship_name} was damaged')
-            print("damaged ship cooordinates are: ", coordinates_list)
+        # If a ship is found at the coordinates
+        if ship_name != False:
+            print(f'{player} performed a shot on coordinates {row} and {column}, {ship_name} was damaged')
+            print("Damaged ship coordinates are: ", coordinates_list)
 
-            # Logic for handling ship hit
+            # Handle the logic for a hit ship
             handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
                             ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_id, cpu_shot_log_tmp)
-            return "Hit"
+            return "Hit"  # Return that the shot was a hit
 
         else:  # If no ship was found at the coordinates
-            print(f'{player} performed shot on coordinates {row} and {column}, it was a MISS')
+            print(f'{player} performed a shot on coordinates {row} and {column}, it was a MISS')
 
-            # Logic for handling missed shot
+            # Handle the logic for a missed shot
             handle_miss(player, row, column, map_hidden, map_display)
-            return "Miss"
+            return "Miss"  # Return that the shot was a miss
 
-    except Exception as e:  # Handle exceptions
+    except Exception as e:  # Handle exceptions gracefully
         print(f"An error occurred: {e}")
-        return None
+        return None  # Return None if an error occurs
+
+
 
 def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
-                            ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, cpu_shot_log_tmp):
+                     ship_name, ship_size, coordinates_list, coordinates_set_id, coordinates_list_id, cpu_shot_log_tmp):
     """
     Handle the logic when a ship is hit.
 
+    This function takes care of updating the game state when a ship is hit.
+    It updates the map, checks if a ship is sunk, and logs the action.
+
     Args:
         player (str): The player making the shot ("CPU" or "Human").
-        column (int): The column-coordinate of the shot.
         row (int): The row-coordinate of the shot.
+        column (int): The column-coordinate of the shot.
         map_hidden (list): The hidden map that tracks shots.
         map_display (list): The displayed map that shows ships.
         fleet (dict): Information about the fleet of ships.
         ship_name (str): Name of the ship that was hit.
         ship_size (int): Size of the ship that was hit.
         coordinates_list (list): List of coordinates of the ship.
-        coordinates_id (int): Index of the coordinates in the list.
+        coordinates_set_id (int): Index of the coordinate set in the fleet.
+        coordinates_list_id (int): Index of the coordinate in the coordinate set.
+        cpu_shot_log_tmp (list): Temporary log for CPU actions.
 
     Global Variables:
         game_actions_log (list): Log of game actions.
         start_time (float): The game start time for logging.
         SHIP_SYMBOLS (dict): Symbols used for different states of the ship.
-        cpu_shot_log_tmp (list): Temporary log for CPU actions.
 
     Returns:
         None
@@ -1684,48 +2564,51 @@ def handle_ship_hit(player, row, column, map_hidden, map_display, fleet,
 
     # Declare global variables for logging and timing
     global game_actions_log, start_time, SHIP_SYMBOLS
+
+    # Calculate the elapsed time since the game started
     timer = time.time() - start_time
 
-    # Update the hidden map to indicate a hit
+    # Update the hidden and display maps to indicate a hit
     map_hidden[row][column] = SHIP_SYMBOLS["Hit"][0]
-    # Update the display map to indicate a hit
     map_display[row][column] = SHIP_SYMBOLS["Hit"][0]
+
+    # Log the action in the global game actions log
     game_actions_log.append([player, timer, row, column, "Ship was Damaged"])
 
-    # If the player is the CPU, log its actions
+    # If the player is the CPU, append the shot to the CPU's temporary shot log
     if player == "CPU":
-        # Log the coordinates where the hit occurred in a temporary list
         cpu_shot_log_tmp.append([row, column])
 
-    # Determine the alignment of the ship based on its coordinates
+    # Initialize the ship_sunk flag as False
+    ship_sunk = False
+
+    # Determine the alignment of the ship
     alignment, coordinates_index = find_first_ship_alignment(coordinates_list)
 
-    # Special case: If the ship is of size 1 and has been hit, mark it as sunk
-    if ship_size == 1 and (map_hidden[row][column] == SHIP_SYMBOLS["Hit"][0]):
-        map_hidden[row][column] = map_display[row][column]
+    # Check if the ship is sunk
+    for coord in coordinates_list:
+        r, c = coord
+        if map_hidden[r][c] != SHIP_SYMBOLS["Hit"][0]:
+            ship_sunk = False
+            break
         ship_sunk = True
 
-    # For ships larger than size 1, iterate through their coordinates to check if all are hit
-    if ship_size > 1:
-        for coord in coordinates_list:
-            row, column = coord  # Extract the row and column from each coordinate
-            if map_hidden[row][column] == SHIP_SYMBOLS["Hit"][0]:
-                ship_sunk = True  # Mark as sunk if all parts are hit
-            else:
-                ship_sunk = False  # If any part is not hit, break the loop
-                break
-
-    # If the ship is confirmed as sunk, update various states and logs
-    if ship_sunk == True:
+    # If the ship is sunk, handle additional logic
+    if ship_sunk:
         alignment += "Sunk"
-        print(player, " has sunk ", ship_name, " on coordinates :", row, column)
-        handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list, coordinates_set_id, coordinates_list_id, map_display, map_hidden, cpu_shot_log_tmp)
+        print(f"{player} has sunk {ship_name} on coordinates: {row}, {column}")
+        handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list,
+                         coordinates_set_id, coordinates_list_id, map_display, map_hidden, cpu_shot_log_tmp)
 
 
-def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list, coordinates_set_id, coordinates_list_id, map_display,
-                     map_hidden, cpu_shot_log_tmp):
+def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates_list,
+                     coordinates_set_id, coordinates_list_id, map_display, map_hidden,
+                     cpu_shot_log_tmp, gaps_on_map=True):
     """
     Handle actions and updates for when a ship is sunk.
+
+    This function updates the game state when a ship is sunk, including updating the map,
+    the fleet, and various logs.
 
     Args:
         player (str): The player who sunk the ship ("CPU" or "Human").
@@ -1733,49 +2616,56 @@ def handle_ship_sunk(player, fleet, ship_name, ship_size, alignment, coordinates
         ship_name (str): The name of the ship that was sunk.
         ship_size (int): The size of the ship.
         coordinates_list (list): The list of coordinates of the ship.
-        coordinates_list_id (int): The ID of the ship's coordinates in the fleet.
-        map_display (list): The displayed map that shows ships.
-        map_hidden (list): The hidden map that tracks shots.
+        coordinates_set_id (int): The ID of the coordinate set in the fleet.
+        coordinates_list_id (int): The ID of the coordinates in the coordinate set.
+        map_display (list): The displayed map.
+        map_hidden (list): The hidden map.
+        cpu_shot_log_tmp (list): Temporary log of CPU actions.
         alignment (str): The alignment of the ship ("Horizontal" or "Vertical").
+        gaps_on_map (bool): Flag to indicate if gaps are allowed on the map.
+        label_row (list): Row labels for the map.
+        label_column (list): Column labels for the map.
 
     Global Variables:
-        start_time (float): Game start time.
-        cpu_shot_log_tmp (list): Temporary log of CPU actions.
+        start_time (float): Game start time for logging.
         SHIP_SYMBOLS (dict): Symbols for different ship states.
         game_actions_log (list): Log of game actions.
         game_result (str): The result of the game ("Game Over" or None).
-    """
 
-    # Declare global variables
+    Returns:
+        None
+    """
+    # Declare global variables for logging and timing
     global start_time, SHIP_SYMBOLS, game_actions_log, game_result
 
+    # Update the display and hidden maps to reflect the sunk ship
+    map_show_ship_or_symbols(map_display, coordinates_list, alignment, gaps_on_map)
+    map_show_ship_or_symbols(map_hidden, coordinates_list, alignment, gaps_on_map)
 
-    print(" before updating map, i just want to see map_display, ship_size, coordinates_list[0], alignment, ship_name, fleet", ship_size, coordinates_list[0], alignment, ship_name, coordinates_list_id, coordinates_list)
-    print(len(coordinates_list))
-    print(alignment)
-    map_show_ship_or_symbols(map_display, coordinates_list, alignment)
-    map_show_ship_or_symbols(map_hidden, coordinates_list, alignment)
-    print_two_maps(map_hidden, map_display, " hidden", "ships", gap = 5)
+    # Display the two maps for debugging
+    print_two_maps(map_hidden, map_display, " hidden", "ships", gap=5)
 
-    # Log the ship-sinking action
+    # Log the action of sinking the ship
     timer = time.time() - start_time
     action_outcome = f'{ship_name} was sunk'
     game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
 
-    # Update the CPU's temporary shot log if the player is the CPU
+    # If the player is the CPU, update its temporary shot log
     if player == "CPU":
         cpu_shot_log_tmp = update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp)
-        print("after updating cpu shoot log", cpu_shot_log_tmp)
-    print("now should follow coordinates removal")
-    print(" jautiena remove coordinates from fleet ship name", ship_name, "coordinates set id: ", coordinates_set_id)
+        print("After updating CPU shot log:", cpu_shot_log_tmp)
+
+    # Remove the sunk ship's coordinates from the fleet
     remove_coordinates_from_fleet(fleet, ship_name, coordinates_set_id)
 
-    # Check if all ships are sunk (game over)
+    # Check for game over condition
     if not fleet:
         timer = time.time() - start_time
         action_outcome = 'Game Over'
         game_actions_log.append([player, timer, coordinates_list[0][0], coordinates_list[0][1], action_outcome])
         game_result = "Game Over"
+
+
 
 
 def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
@@ -1818,6 +2708,8 @@ def remove_coordinates_from_fleet(fleet, ship_name, coordinates_list_set_id):
         print(f"Failed to remove coordinates for {ship_name}.")
 
 
+
+
 def update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp):
     """
     Update the CPU shot log by removing coordinates that are present in
@@ -1845,6 +2737,7 @@ def update_cpu_shot_log(coordinates_list, cpu_shot_log_tmp):
 
     # Return the updated CPU shot log
     return cpu_shot_log_tmp
+
 
 
 
@@ -1987,10 +2880,6 @@ def select_best_shot_based_on_alignment(map_to_search, cpu_shot_log_tmp):
 
 
 
-
-
-
-
 def cpu_move(fleet_target, map_target_hidden, map_target_display, cpu_shot_log_tmp):
     """
     Executes the CPU's move during the game.
@@ -2038,78 +2927,8 @@ def cpu_move(fleet_target, map_target_hidden, map_target_display, cpu_shot_log_t
 
 
 
-def cpu_vs_cpu():
-    """
-    Main game loop for the CPU's Battleship game.
-
-    Global Variables:
-    - start_time: Time when the game started.
-    - map_cpu_hidden: Hidden map for the CPU.
-    - map_cpu_display: Display map for the CPU.
-    - cpu_shot_log_tmp: Temporary log for the CPU's shots.
-    - game_actions_log: Log for game actions.
-    - fleet_cpu: Dictionary holding information about the CPU's fleet.
-
-    Returns:
-    - None: Updates global variables and prints game state as side effects.
-    """
-
-    # Declare global variables accessed within the function
-    global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu, DEFAULT_FLEET
-
-    # Initialize the game start time
-    start_time = time.time()
-
-    # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
-    clear_terminal()
-    new_map_display = create_map(10,10, DEFAULT_SYMBOL)
-    map_cpu_hidden = create_map(10,10, DEFAULT_SYMBOL)
-    new_fleet = copy.deepcopy(DEFAULT_FLEET)
-    cpu_shot_log_tmp = []
-
-
-    # Deploy all of CPU's ships (assuming the function 'cpu_deploy_all_ships' exists)
-    map_cpu_display , fleet_cpu = cpu_deploy_all_ships(new_map_display, new_fleet)
-
-    # Print both maps to visualize initial game state
-    print_two_maps(map_cpu_hidden, map_cpu_display, "hidden_cpu_map", "cpu_map")
-
-    # Print the initial state of CPU's fleet
-    print_fleet(fleet_cpu)
-
-    # Main game loop, iterate for 100 turns
-    for i in range(100):
-        print(f"\nGame turn {i} ******")
-
-        # CPU makes its move
-        cpu_move(fleet_cpu, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp)
-
-        # Print the CPU's shot log and both maps to visualize game state
-        print(f"CPU shooting actions log: {cpu_shot_log_tmp}")
-        print_two_maps(map_cpu_hidden, map_cpu_display, "hidden_cpu_map", "cpu_map")
-
-        # Print the current state of CPU's fleet
-        print_fleet_with_coodinates(fleet_cpu)
-
-        # Check for game over condition
-        if len(fleet_cpu) == 0:
-            print(f"Game over at move {i}")
-            print("GAME OVER")
-            break  # Exit the game loop
-    return fleet_cpu
-
-
-#cpu_vs_cpu()
-
-
-def loop_cpu():
-    for i in range(50):
-        fleet = cpu_vs_cpu()
-        print("this is cpu vs cpu loop number ", i)
-        if len(fleet) > 0:
-            break
-
-#loop_cpu()
+# Game Start Functions
+#---------------------
 
 
 # Run the game
@@ -2130,13 +2949,8 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
     """
 
     # Declare global variables accessed within the function
-    #global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu
-    map_cpu_display, map_cpu_hidden, fleet_cpu = create_initial_game_variables(height, width, symbol, fleet)
+    global cpu_shot_log_tmp, game_actions_log, DEFAULT_SYMBOL, game_result
 
-
-
-    # Initialize the game start time
-    start_time = time.time()
 
     # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
     clear_terminal()
@@ -2145,53 +2959,37 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
     #print_acid_effect()
 
     # Initializing game instructions
-    adjust_game = game_instructions(height, width, symbol, fleet)
+    height, width, fleet, gaps_on_map = game_instructions()
+
+    # Creating Maps for player and CPU:
+    map_cpu_display, map_cpu_hidden, fleet_cpu = create_initial_game_variables(height, width, symbol, fleet)
+    map_player_display, map_player_hidden, fleet_player = create_initial_game_variables(height, width, symbol, fleet)
+
+    # Now we will ask player to Deploy all ships:
+    #map_player_display, fleet_player = player_deploy_all_ships(map_player_display,map_player_hidden, fleet_player, gaps_on_map)
+
+    # After all player ships are deployed, we will reset hidden map, so it is blank. This map will be attacked by CPU.
+    map_player_hidden = create_map(height, width, DEFAULT_SYMBOL)
+    map_player_hidden = map_show_only_ships(map_player_hidden)
+
+    # CPU time to deploy its shipa
+    map_cpu_display, fleet_cpu = cpu_deploy_all_ships(map_cpu_display, fleet_cpu, gaps_on_map)
+
+    # now creating loop for this current game
+    #game_result = True
+    #while game_result == True:
+    for i in range(5):
+        clear_terminal()
+        print_two_maps(map_cpu_hidden, map_cpu_display, "hidden", "visible", 10)
+        # Player goes first
+        player_shoot_input(map_cpu_display, map_cpu_hidden, fleet_cpu)
 
 
 
 
 
 
-def tomosius_check():
-
-
-    # Declare global variables accessed within the function
-    global start_time, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp, game_actions_log, fleet_cpu, DEFAULT_FLEET
-
-    # Initialize the game start time
-    start_time = time.time()
-
-    # Clear terminal for a clean game start (assuming the function 'clear_terminal' exists)
-    clear_terminal()
-    new_map_display = create_map(10, 10, DEFAULT_SYMBOL)
-    map_cpu_hidden = create_map(10, 10, DEFAULT_SYMBOL)
-    new_fleet = copy.deepcopy(DEFAULT_FLEET)
-
-    # Deploy all of CPU's ships (assuming the function 'cpu_deploy_all_ships' exists)
-    result = cpu_deploy_all_ships(new_map_display, new_fleet)
-    if result == False:
-        print(" tomosius sunday can not deploy ships")
-    else:
-        map_cpu_display, fleet_cpu = result
-        # Print both maps to visualize initial game state
-        print_two_maps(map_cpu_hidden, map_cpu_display, "hidden_cpu_map", "cpu_map")
-
-        # Print the initial state of CPU's fleet
-        print_fleet_with_coodinates(fleet_cpu)
-        print_map(map_cpu_display)
 
 
 
-
-
-#tomosius_check()
-#print_aligned_log(game_actions_log, 5)
-#cpu_vs_cpu()
-#print_aligned_log(game_actions_log, 10)
-#loop_cpu()
-
-battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
-
-
-
-
+battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time,game_actions_log)
