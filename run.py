@@ -821,6 +821,81 @@ def print_map_and_list(map_left, instructions, label_left, gap=10):
             print()
 
 
+def print_map_and_fleet_aligned_columns(map_left, fleet, label_left, gap=10):
+    """
+    Print a 2D map and a fleet dictionary with aligned columns side by side, and with a customizable gap.
+
+    Args:
+        map_left (list): A 2D list representing the first map.
+        fleet (dict): A dictionary representing the fleet.
+        label_left (str): Label for the first map.
+        gap (int): Number of blank spaces between the map and the fleet information. Default is 10.
+    """
+
+    # Constants for character dimensions and formatting
+    char_width = len("X")  # Width of a single character (assuming monospaced font)
+
+    # Calculate the maximum number of digits in row and column indices for map_left
+    num_digits_map_width = len(str(len(map_left[0])))
+    num_digits_map_height = len(str(len(map_left)))
+
+    # Create a string of blank spaces for the gap between map and fleet
+    gap_str = ' ' * gap
+
+    # Calculate the left-side offset for aligning map and row indices
+    row_index_separator = " | "
+    print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
+
+    # Center-align the label for map_left
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
+    label_left_centered = label_left.center(number_char_table_total)
+
+    # Print the centered label for map_left
+    print(f"{print_map_left_offset}{label_left_centered}")
+
+    # Print column headers for map_left
+    print(print_map_left_offset, end=" ")
+    for col_index in range(len(map_left[0])):
+        print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
+
+    # Calculate the maximum lengths for the ship name, size, and quantity columns for alignment
+    max_ship_name_length = max(len(ship) for ship in fleet.keys())
+    max_size_length = len("Size")
+    max_quantity_length = len("Quantity")
+
+    # Generate the header for the fleet information
+    fleet_header = f"{'Ship Name':<{max_ship_name_length}} | {'Size':>{max_size_length}} | {'Quantity':>{max_quantity_length}}"
+    print(gap_str, fleet_header)
+    print("    ".rjust(num_digits_map_width + 1), "=" * (number_char_table_total))  # Draw a separator line
+
+    # Convert the fleet dictionary to a list of formatted strings with aligned columns
+    fleet_str_lines = [
+        f"{ship:<{max_ship_name_length}} | {props['Size']:>{max_size_length}} | {props['Quantity']:>{max_quantity_length}}"
+        for ship, props in fleet.items()]
+
+    # Loop through each row to print map values and fleet information
+    for row_index in range(max(len(map_left), len(fleet_str_lines))):
+        # Print row for map_left
+        if row_index < len(map_left):
+            print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
+            for value in map_left[row_index]:
+                width = len(str(value))
+                print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
+        else:
+            # Print spaces to align with the map when the map is shorter than the fleet information
+            print(" " * (num_digits_map_width + num_digits_map_height + len(row_index_separator) + char_width * len(
+                map_left[0])), end="")
+
+        # Insert the gap between the map and the fleet
+        print(gap_str, end="")
+
+        # Print fleet information for the row
+        if row_index < len(fleet_str_lines):
+            print(fleet_str_lines[row_index])
+        else:
+            print()
+
+
 
 def print_aligned_log(log_data, gap=10):
     """
@@ -885,7 +960,8 @@ def player_shoot_Input(map_display, map_hidden, enemy_fleet):
             return False
 
 def player_shoot_coordinates_check(row, column, gam_map):
-    global DEFAULT_SYMBOL, game_actions_log,
+    global DEFAULT_SYMBOL, game_actions_log
+    check_result = True
     if gam_map[row,column] == DEFAULT_SYMBOL:
         check_result = True
     for log in game_actions_log:
@@ -896,7 +972,7 @@ def player_shoot_coordinates_check(row, column, gam_map):
     return check_result
 
 def player_deploy_all_ships(map_display, map_hidden, fleet):
-    global DEFAULT_SYMBOL. SHIP_SYMBOLS
+    global DEFAULT_SYMBOL, SHIP_SYMBOLS
     for ship_name, ship_info in fleet.items():
         quantity = ship_info["Quantity"]
         size = ship_info["Size"]
@@ -1034,7 +1110,7 @@ def levenshtein_distance(source_word, target_word):
 
 
 
-def player_deploy_single_ship_check_map_space(game_map, coordinates_list)
+def player_deploy_single_ship_check_map_space(game_map, coordinates_list):
     global DEFAULT_SYMBOL
     #function to check if that space is empty on map
     checking_ship_fits_on_map = True
@@ -2114,7 +2190,7 @@ def tomosius_check():
 #print_aligned_log(game_actions_log, 10)
 #loop_cpu()
 
-battleship_game(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
+battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
 
 
 
