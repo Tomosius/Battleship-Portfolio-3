@@ -2048,9 +2048,6 @@ def search_map_for_pattern(game_map, height, width):
     return coordinates  # Return the list of coordinates where the pattern is found
 
 
-
-
-
 def find_biggest_ship_in_fleet(fleet):
     """
     Find the biggest ship in the fleet by its size.
@@ -2065,25 +2062,29 @@ def find_biggest_ship_in_fleet(fleet):
         None: If there are no ships with a quantity greater than 0.
     """
 
-    # Filter out ships with zero quantity
-    # Create a new dictionary that only includes ships with a quantity greater than zero
-    available_ships = {k: v for k, v in fleet.items() if v["Quantity"] > 0}
+    # Initialize an empty dictionary to store available ships
+    available_ships = {}
+    # Loop through each ship in the fleet
+    for ship_name, ship_info in fleet.items():
+
+        # Check if the ship has a quantity greater than zero
+        if ship_info["Quantity"] > 0:
+            # If so, add it to the available_ships dictionary
+            available_ships[ship_name] = ship_info
 
     # Check if any ships are available
-    # Return None if the available_ships dictionary is empty, indicating no available ships
     if not available_ships:
-        return False
+        return None
 
     # Find the biggest ship based on the 'Size' value in the dictionary
-    # Use the max() function with a custom key function to find the ship with the largest size
-    biggest_ship = max(available_ships, key=lambda ship: available_ships[ship]["Size"])
+    biggest_ship = max(available_ships,
+                       key=lambda ship: available_ships[ship]["Size"])
 
     # Retrieve the size of the biggest ship
     biggest_ship_size = available_ships[biggest_ship]["Size"]
 
     # Return a tuple containing the name and size of the biggest ship
     return biggest_ship, biggest_ship_size
-
 
 
 def map_search_reduce_width(height, width, game_map):
@@ -2187,7 +2188,6 @@ def cpu_choose_shooting_coordinates_biggest_ship(fleet_to_search, game_map):
 
     # Initialize variables
     width = ""
-
     # Find the biggest ship in the fleet
     ship_name, ship_size = find_biggest_ship_in_fleet(fleet_to_search)
 
@@ -2933,4 +2933,41 @@ def battleship_game_singe(height, width, symbol, fleet, start_time, game_action_
 
 
 
-battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, DEFAULT_FLEET, start_time, game_actions_log)
+
+
+
+
+
+
+
+
+
+
+
+#battleship_game_singe(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL,
+# DEFAULT_FLEET, start_time, game_actions_log)
+
+def cpu_vs_cpu():
+    global DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH, DEFAULT_SYMBOL, \
+        DEFAULT_FLEET, cpu_shot_log_tmp, game_actions_log, DEFAULT_GAPS_BETWEEN_MAPS
+    map_cpu_display, map_cpu_hidden, fleet_cpu = (
+        create_initial_game_variables(DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH,
+                                      DEFAULT_SYMBOL,
+                                      DEFAULT_FLEET))
+    map_cpu_display, fleet_cpu = cpu_deploy_all_ships(map_cpu_display,
+                                                      fleet_cpu, True)
+
+    game_actions_log = [[], ["Player", "Time", "Row", "Column", "Outcome"]]
+    for i in range(100):
+        clear_terminal()
+        print(game_actions_log[-1][4])
+        print_two_maps(map_cpu_hidden, map_cpu_display, "CPU Map", "Player "
+                                                                   "Map", 10)
+        map_cpu_hidden, map_cpu_display, fleet_cpu = cpu_move(fleet_cpu, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp)
+
+        # Player goes first
+
+
+
+
+cpu_vs_cpu()
