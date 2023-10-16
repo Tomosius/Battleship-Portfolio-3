@@ -3004,8 +3004,8 @@ def handle_ship_sunk(map_hidden, map_display, player, fleet, ship_name,
         map_display (list): The displayed map.
         map_hidden (list): The hidden map.
         cpu_shot_log_tmp (list): Temporary log of CPU actions.
-        alignment (str): The alignment of the
-        ship ("Horizontal" or "Vertical").
+        alignment (str): The alignment of the ship ("Horizontal" or
+        "Vertical").
         gaps_on_map (bool): Flag to indicate if gaps are allowed on the map.
 
 
