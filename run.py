@@ -245,7 +245,7 @@ def game_instructions():
 
         try:
             # Prompt the user to decide whether to adjust the game settings
-            changes = input().capitalize()
+            changes = input(\n).capitalize()
 
             # If the user opts to adjust settings
             if changes in ["Y", "YES"]:
@@ -304,7 +304,7 @@ def modify_game_settings(height, width, fleet, gaps_on_map):
 
         try:
             # Get user input for which setting to adjust
-            user_input = input().capitalize()
+            user_input = input(\n).capitalize()
 
             # Validate user input
             if not user_input:
@@ -436,10 +436,6 @@ def modify_game_settings_gaps(height, width, fleet, gaps_on_map):
             return gaps_on_map  # Return the current setting in case of an interruption
 
 
-# Note: The function's behavior is only demonstrated through its structure here. Actual testing would require the full code context.
-
-# Would you like to proceed with this version?
-
 
 def modify_game_settings_labels(height, width, fleet, gaps_on_map):
     """
@@ -497,7 +493,7 @@ def modify_game_settings_labels(height, width, fleet, gaps_on_map):
             input_values = [1, 2]  # Initialize the list to store the user input values
 
             # Take user input
-            user_input = input()
+            user_input = input(\n)
             if user_input == "0":
                 return
 
@@ -585,7 +581,7 @@ def modify_game_settings_map(height, width, fleet, gaps_on_map):
                 print('Sorry, but I believe you need a bigger map for the current fleet.')
 
             # Take user input
-            user_input = input()
+            user_input = input(\n)
 
             # Validate the user input
             input_validation, input_values, output_text = validate_user_input(user_input, 2, "integer")
@@ -667,7 +663,7 @@ def modify_game_settings_fleet(height, width, fleet, gaps_on_map):
         print("To return to the main Settings menu, please type 0 (zero) and press ENTER.")
 
         try:
-            user_input = input().capitalize()
+            user_input = input(\n).capitalize()
 
             if not user_input:
                 print("Invalid input. Please enter a ship name, index, or 0 to go back.")
@@ -784,6 +780,7 @@ def modify_game_settings_fleet_add_new_ship(height, width, fleet, gaps_on_map):
     # Initialize variables for user input validation and fleet fitting check
     validated_user_input_1 = ["ShipName", "Size", "QTY"]
     check_result = True
+    validated_user_input_2 = []
     # Start an infinite loop to continuously offer adjustment options to the user
     while True:
 
@@ -1401,10 +1398,14 @@ def player_shoot_input(map_hidden, map_display, enemy_fleet):
     # Flag to track whether the user's input is valid
     input_validation = True
     coordinate_value_correct = True
-    coordinate_return_message = ""
     row = ""
     column = ""
     input_values = ""
+    column_index = ""
+    coordinates_check = ""
+    row_index = ""
+    coordinate_return_message = ""
+    coordinate_value_correct = True
     while True:
         try:
             # If the last input was invalid, print an error message
@@ -1419,12 +1420,11 @@ def player_shoot_input(map_hidden, map_display, enemy_fleet):
                 print_two_maps(map_hidden, map_display, "CPU Map", "Player Map",
                                10)
                 print(coordinate_return_message)
-                coordinate_value_correct = True # Resetting validation
 
             # Prompt the user for coordinates to shoot at
             print(f'Please enter coordinates to shoot, Row and Column, in this pattern')
 
-            user_input = input()
+            user_input = input(\n)
 
             # Validate the user's input to ensure it contains exactly two values
             input_validation, input_values, output_text = validate_user_input(user_input, 2)
@@ -1581,6 +1581,12 @@ def player_deploy_single_ship(map_hidden, map_display, ship_name, ship_size,
     map_check_result = True
     alignment = ""
     alignment_mistake_message = ""
+    column = ""
+    row = ""
+    coordinate_return_message = ""
+    input_values = ""
+    message_ship_does_not_fit = ""
+    output_values_message = ""
 
     while True:  # Main loop for user interaction
 
@@ -1610,7 +1616,7 @@ def player_deploy_single_ship(map_hidden, map_display, ship_name, ship_size,
 
 
             # Collect user input
-            user_input = input()
+            user_input = input(\n)
             # checking if user has entered any information
             if len(user_input)>0:
 
@@ -1835,11 +1841,6 @@ def user_input_detect_alignment(alignment_text):
     return alignment_valid, alignment, alignment_mistake_message
 
 
-# Testing the function with different inputs, including 'ertical'
-test_cases = ['vert', 'hrz', 'hari', 'ertical', 'orizontal', 'vrt', 'hz']
-results = {test: user_input_detect_alignment(test) for test in test_cases}
-results
-
 
 def levenshtein_distance(source_word, target_word):
     """
@@ -1908,6 +1909,7 @@ def player_deploy_single_ship_check_map_space(map_game, coordinates_list):
 
     # Initialize variable to True. Will set to False if any coordinate is occupied.
     checking_ship_fits_on_map = True
+    message_text = ""
 
     # Loop through each coordinate in the list
     for coordinate in coordinates_list:
@@ -2420,7 +2422,7 @@ def cpu_deploy_all_ships(map_game, fleet, gaps_on_map):
 
     # Creating empty list for ship coordinates, which will be appended to fleet later
     ship_coordinates = []
-
+    result = ""
     # Iterate through each ship type in the fleet configuration
     for ship_name, ship_info in fleet.items():
         quantity = ship_info["Quantity"]  # Number of ships of this type
