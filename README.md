@@ -190,9 +190,7 @@ The game page features:
 [**CI PYTHON LINTER**](https://pep8ci.herokuapp.com/https://raw.githubusercontent.com/)
 
   validated run.py file: 
-![code_validate_run](assets/docs/run.py_validate.png)
-validated hangman.py file:
-![code_validate_hangman](assets/docs/hangman.py_validate.png)
+![python linter.png](assets%2Fimages%2Fpython%20linter.png)
 
 
 
