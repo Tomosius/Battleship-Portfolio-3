@@ -9,14 +9,14 @@ import re # For handling user input expressions
 
 
 # Constants for map dimensions and default symbol
-DEFAULT_MAP_HEIGHT = 13
+DEFAULT_MAP_HEIGHT = 10
 DEFAULT_MAP_WIDTH = 10
 map_height_cpu = "" # empty value for map size, it can be adjusted in settings, if not, function will assign irr DEFAULT_HEIGHT
 map_width_cpu = ""# empty value for map size, it can be adjusted in settings, if not, function will assign irr DEFAULT_WIDTH
 DEFAULT_SYMBOL = '?'  # Symbol representing an empty cell in the map
 DEFAULT_GAPS_BETWEEN_MAPS = True
-MAP_ROW_INDEXES = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,18,19]
-MAP_COLUMN_INDEXES =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,18,19]
+MAP_ROW_INDEXES = [0,1,2,3,4,5,6,7,8,9]
+MAP_COLUMN_INDEXES =[0,1,2,3,4,5,6,7,8,9]
 
 # Initialize game-related variables
 game_result = True  # Variable to store the game outcome if it is True - game is ongoing
@@ -1067,12 +1067,11 @@ def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
     gap_str = ' ' * gap
 
     # Calculate the left-side offset for aligning map and row indices
-    row_index_separator = "|"
-    print_map_left_offset = " " * (num_digits_map_height + len(
-        row_index_separator))
+    row_index_separator = " | "
+    print_map_left_offset = " " * (num_digits_map_height + len(row_index_separator))
 
     # Center-align the labels for both maps
-    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width))
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
     label_left_centered = label_left.center(number_char_table_total)
     label_right_centered = label_right.center(number_char_table_total)
 
@@ -1086,11 +1085,11 @@ def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
             print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width),
                   end="")  # i do not want gap after last index, as it will be not aligned
         else:
-            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end="")
+            print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
     print(gap_str, print_map_left_offset, end=" ")
     for col_index in range(len(map_right[0])):
         # Right-justify the column index with proper spacing
-        print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end="")
+        print(f"{MAP_COLUMN_INDEXES[col_index]}".rjust(num_digits_map_height + char_width), end=" ")
     print()
     # Print the horizontal separator line
     # This step prints a separator line to visually separate the maps
@@ -1102,19 +1101,19 @@ def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
     # Loop through each row to print map values
     for row_index, (row_left, row_right) in enumerate(zip(map_left, map_right)):
         # Print row for the left map
-        print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width), end=row_index_separator)
+        print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_left:
             width = len(str(value))
             # Right-justify the map value with proper spacing
-            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end="")
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
         # Insert the gap between the two maps
         print(gap_str, end="")
         # Print row for the right map
-        print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width), end=row_index_separator)
+        print(f"{MAP_ROW_INDEXES[row_index]}".rjust(num_digits_map_width + 1), end=row_index_separator)
         for value in row_right:
             width = len(str(value))
             # Right-justify the map value with proper spacing
-            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end="")
+            print(f"{value}".rjust(num_digits_map_height + char_width - (char_width - width)), end=" ")
         # Move to the next line
         print()
 
@@ -2839,6 +2838,7 @@ def cpu_move(fleet_target, map_hidden, map_display, cpu_shot_log_tmp):
     global game_actions_log, start_time, SHIP_SYMBOLS
 
     # Identify the player as CPU for logging and action purposes
+
     player = "CPU"
 
     # Check if there are any damaged but not sunk ships in cpu_shot_log_tmp
@@ -2959,18 +2959,16 @@ def cpu_vs_cpu():
                                                       fleet_cpu, True)
 
     game_actions_log = [[], ["Player", "Time", "Row", "Column", "Outcome"]]
-    print_map(map_cpu_display)
     for i in range(100):
         clear_terminal()
         print(game_actions_log[-1][4])
         print_two_maps(map_cpu_hidden, map_cpu_display, "CPU Map", "Player "
-                                                                   "Map", 3)
+                                                                   "Map", 10)
         map_cpu_hidden, map_cpu_display, fleet_cpu = cpu_move(fleet_cpu, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp)
 
         # Player goes first
-    print_map(map_cpu_display)
+
 
 
 
 cpu_vs_cpu()
-
