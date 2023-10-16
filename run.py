@@ -1067,12 +1067,12 @@ def print_two_maps(map_left, map_right, label_left, label_right, gap=10):
     gap_str = ' ' * gap
 
     # Calculate the left-side offset for aligning map and row indices
-    row_index_separator = " |"
+    row_index_separator = "|"
     print_map_left_offset = " " * (num_digits_map_height + len(
         row_index_separator))
 
     # Center-align the labels for both maps
-    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width + 1))
+    number_char_table_total = (len(map_left[0]) * (num_digits_map_width + char_width))
     label_left_centered = label_left.center(number_char_table_total)
     label_right_centered = label_right.center(number_char_table_total)
 
@@ -2964,7 +2964,7 @@ def cpu_vs_cpu():
         clear_terminal()
         print(game_actions_log[-1][4])
         print_two_maps(map_cpu_hidden, map_cpu_display, "CPU Map", "Player "
-                                                                   "Map", 10)
+                                                                   "Map", 3)
         map_cpu_hidden, map_cpu_display, fleet_cpu = cpu_move(fleet_cpu, map_cpu_hidden, map_cpu_display, cpu_shot_log_tmp)
 
         # Player goes first
