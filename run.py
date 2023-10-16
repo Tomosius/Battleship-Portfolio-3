@@ -245,7 +245,7 @@ def game_instructions():
 
         try:
             # Prompt the user to decide whether to adjust the game settings
-            changes = input(\n).capitalize()
+            changes = input().capitalize()
 
             # If the user opts to adjust settings
             if changes in ["Y", "YES"]:
@@ -304,7 +304,7 @@ def modify_game_settings(height, width, fleet, gaps_on_map):
 
         try:
             # Get user input for which setting to adjust
-            user_input = input(\n).capitalize()
+            user_input = input().capitalize()
 
             # Validate user input
             if not user_input:
@@ -493,7 +493,7 @@ def modify_game_settings_labels(height, width, fleet, gaps_on_map):
             input_values = [1, 2]  # Initialize the list to store the user input values
 
             # Take user input
-            user_input = input(\n)
+            user_input = input()
             if user_input == "0":
                 return
 
@@ -581,7 +581,7 @@ def modify_game_settings_map(height, width, fleet, gaps_on_map):
                 print('Sorry, but I believe you need a bigger map for the current fleet.')
 
             # Take user input
-            user_input = input(\n)
+            user_input = input()
 
             # Validate the user input
             input_validation, input_values, output_text = validate_user_input(user_input, 2, "integer")
@@ -663,7 +663,7 @@ def modify_game_settings_fleet(height, width, fleet, gaps_on_map):
         print("To return to the main Settings menu, please type 0 (zero) and press ENTER.")
 
         try:
-            user_input = input(\n).capitalize()
+            user_input = input().capitalize()
 
             if not user_input:
                 print("Invalid input. Please enter a ship name, index, or 0 to go back.")
@@ -1424,7 +1424,7 @@ def player_shoot_input(map_hidden, map_display, enemy_fleet):
             # Prompt the user for coordinates to shoot at
             print(f'Please enter coordinates to shoot, Row and Column, in this pattern')
 
-            user_input = input(\n)
+            user_input = input()
 
             # Validate the user's input to ensure it contains exactly two values
             input_validation, input_values, output_text = validate_user_input(user_input, 2)
@@ -1616,7 +1616,7 @@ def player_deploy_single_ship(map_hidden, map_display, ship_name, ship_size,
 
 
             # Collect user input
-            user_input = input(\n)
+            user_input = input()
             # checking if user has entered any information
             if len(user_input)>0:
 

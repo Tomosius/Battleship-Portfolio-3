@@ -168,6 +168,17 @@ The game page features:
 * Implement mouse - user can be just clicking mouse on screen, instead of typing
 * Implement keyboard cursors - use arrows. 
 
+## GAME ALGORITHMS AND STRUCTURE
+### Basic Game Structure
+![Main Game Structure.png](assets%2Fimages%2FMain%20Game%20Structure.png)
+### Game Settings Adjustments
+![game_settings_adjust.png](assets%2Fimages%2Fgame_settings_adjust.png)
+### Player Deploys ships
+![player_deploys_ship.png](assets%2Fimages%2Fplayer_deploys_ship.png)
+### CPU Deploys ships
+![cpu_ship_deployment.png](assets%2Fimages%2Fcpu_ship_deployment.png)
+### Game Play Algorithm
+![game_play_structure.png](assets%2Fimages%2Fgame_play_structure.png)
 
 ## TESTING
 
