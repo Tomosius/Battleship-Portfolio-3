@@ -1,5 +1,5 @@
 # Battleship Game
-![Website testing for responsiveness](assets/images/game_play.png)
+![Game play](assets/images/game_play.png)
 
 This is quite simple but same very interesting game on terms of 
 programing. 
@@ -17,177 +17,279 @@ acquired on Code Institute "Full Stack Development" course.
 
 [Link to live page](https://battleship-p3-8833f01f29b3.herokuapp.com)
 
-## Table of contents
-- [VAMPIRES](#vampires)
-  - [Table of contents](#table-of-contents)
-  - [User Experience (UX)](#user-experience-ux)
-    - [Website Aim](#website-aim)
-    - [Stories](#stories)
-  - [Design](#design)
-    - [Color Scheme](#color-scheme)
-    - [Images](#images)
-  - [Features](#features)
-    - [General Features](#general-features)
-    - [Accessibility](#accessibility)
-  - [Testing](#testing)
-    - [Responsiveness](#responsiveness)
-    - [Compatibility](#compatibility)
-    - [W3C validation HTML](#w3c-validation-html)
-    - [W3C validation CSS](#w3c-validation-css)
-    - [404 Page](#404-page)
-  - [Technologies](#technologies)
-    - [Languages Used](#languages-used)
-    - [Bootstrapping](#bootstrapping)
-    - [Tools used](#tools-used)
-  - [Acknowledgements](#acknowledgements)
-## User Experience (UX)
-### Website Aim
-* This website is to represent world of "Vampires"
-* Show how our perspective about them changed in timeline
-* Give reader access to contact website designer
-### Stories
-* Brief history about Dracula
-* First movie about Vampires
-* Changing perspective about vampires
-* Vampires in modern art
 
-[Back to top ⇧](#rpsls)
-
-## Design
-### Color Scheme
-* Website is based on these colors:
-  - Blood RGB(136,8,8)
-  - Black
-  - White
-  - Smoked-White (les vibrant white)
-### Images
-* All images are used from Internet with common or free user rights
-
-[Back to top ⇧](#rpsls)
-
-## Features
-### General Features
-* background: linear-gradient(to bottom, white, #880808):<br>
-White color is changing to blood from top towards bottom of page, for this i have implemented
-* article:nth-child(odd) > img <br>
-aligning all articles images that are odd to be floating to right
-* article:nth-child(even) > img<br>
-aligning all articles images that are even to be floating to left
-* @media screen and (max-width: 600px)<br>
-Settings for website when used on small screen with resolution 600 pix and below
-* Page Contact has inline styling as on some screens footer gets higher then bottom, as page is tiny, for this i used: style="height: 100vh;"
-* Navigation bar has links to all pages: Home, Brief History, Contact
-* Footer has links to Personal LinkedIn, Source Code and this README.md
-* When hovering mouse above an Element, color changes
-* Main page Intro text is placed on image with lighter background
-* Same page on smaller screen sizes, that text moves above the picture
-### Accessibility
-* all links have 'aria-label' to ensure readability of the website
-* all images have 'alt' attributes
-* Headings elements 'h1', 'h2', 'h3' have been applied to convey structure
-
-[Back to top ⇧](#rpsls)
-
-## Testing
-### Responsiveness
-* All Pages have been tested with:<br> https://responsivedesignchecker.com
-* Chrome DevTools were used to test website on various screen sizes
-### Compatibility
-Website was tested for appearance, functionality or responsiveness on these devices:
-* Ipad Pro 12.9"
-* Macbook Air 13"
-* Iphone 12
-All these devices have used Safari, Firefox and Google Chrome browsers
-### Manual Testing
-* Device compatibility
-
-| Device | Test | Result |
-| --- | --- | --- |
-| MacBook Air 13" | No appearance, responsiveness nor functionality issues. | Pass |
-| iPad Pro 12.9" | No appearance, responsiveness nor functionality issues. | Pass |
-| iPhone 8 | No appearance, responsiveness nor functionality issues. | Pass |
+The object of Battleship is to try and sink all of the other player's (in 
+this scenario it is CPU - computer) before they sink all of your ships. 
+All of the CPU ships are somewhere on its board.  You try and hit them by 
+calling out the coordinates of one of the squares on the board. 
+The CPU also tries to hit your ships by calling out coordinates.  Neither 
+you nor the CPU can see the other's board so you must try to guess where they 
+are.  Each board in the game has two grids:  the right section for 
+the player's ships and the left part  for recording the 
+player's guesses
 
 
-* Browser Compatibility
 
-| Browser | Test | Result  |
---- | --- | ---
-Google Chrome | No appearance, responsiveness nor functionality issues.| Pass
-Safari | No appearance, responsiveness nor functionality issues. | Pass
-Mozilla Firefox | Scrollbar is visible even though it should be hidden. <br>No responsiveness nor functionality issues.| Pass
-Microsoft Edge | No appearance, responsiveness nor functionality issues. | Pass
 
-* Website Elements Testing
+## FEATURES
+### MAIN PAGE
+The main page features:
 
-    - General
+![Instructions](assets/images/game_instructions.png )
 
-    | Feature | Test | Result |
-    | --- | --- | --- |
-    | Navigation Bar | Hover effect and links are working as expected. | Pass |
-    | Social Links | Open the specific website on a new tab. | Pass |
-    | Blood dripping animation | Animation is visible on all screen sizes | Pass |
+#### SETTINGS CHOICE INPUT
+* An option to press Y to view settings before starting, or just pressing 
+  enter if user doesn't need to change them. The aim of this is to give 
+  user an option to change some game parameters, like map size, fleet or 
+  rows and column indexes.
 
-    - Home Section
-    
-     |Feature | Test | Result |
-    | --- | --- | --- |
-    | Main intro text big screen | Text is visible on main image on high resolution screens| Pass |
-    | Man intro text small screen | Text disappears on image and reappears above picture as intro text | Pass |
-    
-    - Contact Form 
-    
-    | Feature | Test | Result |
-    | --- | --- | --- |
-    | Form | Require all fields in the right format before submission. |  Pass |
-    | Send Feedback Button | Hover effect work as expected and submit form when clicked. |  Pass |
 
-    - Brief History  Section
+![settings_choice](assets/images/game_setttings.png)
 
-    | Feature | Test | Result |
-    | --- | --- | --- |
-    | Images float to left or right | Images are automatically floating to left orr right depending on article (odd articles float right, even - left) | Pass |
-    | Small screen images are not floating | Images stop floating to sides on smaller screens | Pass |
+#### SETTINGS DISPLAYED
+* This is very simple and basic settings to change:
+  * Player can change Fleet:
+    * Add new ships
+    * Modify existing ship size and quantity of them in fleet
+    * Delete all ship type (will remove all ships of that name)
+  * Player can change Map size
+  * Player can change indexes of maps
+  * Player can Disable or Enabe gaps between ships
+* To return to previous menu, player can enter 0 (zero)
 
-    - 404 Error Page
+### GAME PAGE
+The game page features:
 
-    | Feature | Test | Result |
-    | --- | --- | --- |
-    | 404 Error Page | Entering an incorrect address into the address bar bring the user to the 404 error page. | Pass |
+#### PLAYER DEPLOYS ALL SHIPS
+* Program will cycle through all ships in given fleet, starting from biggest one
+* Playwr has to enter 2 or 3 values based on ship size:
+  * If ship size is just 1 cell, then he will he/she will be asked just for 
+    2 variables:
+    * Row index
+    * Column Index
+  * If ship size is greater then 1 cell, user will have to enter 3rd value:
+    * Alignment
+* User Input validation:
+  * If player enters incorrect values:
+    * Code will warn user if entered coordinates are out of map boundaries
+    * Code will detect that ships do not overlap and warn user
+    * Code also warns user if alignment is not valid, or code did not 
+      understand what user tried to say
+* After all ships of Player are deployed, program will deploy CPU ships
 
-[Back to top ⇧](#rpsls)
 
-### W3C validation HTML
-![W3C Index Page Validation](assets/images/w3c_index.png)
-![W3C Brief Page Validation](assets/images/w3c_brief.png)
-![W3C Contact Page Validation](assets/images/w3c_contact.png)
-### W3C validation CSS
-![W3C CSS file Validation](assets/images/w3c_css.png)
-### 404 Page
-If error occurs, website will redirect to 404 Page:
-![404 website Page](assets/images/404_page_ss.png)
+* Player deploying ship:
+![deploying ship](assets/images/deploying_ship.png)
 
-[Back to top ⇧](#rpsls)
 
-## Technologies
-### Languages Used
-- ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
-- ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
-### Bootstrapping
-* Fonts were used from Google Fonts
-* Icons were used from fontawesome
-### Tools used
-* Gimp for cropping  and adjusting images
-* Visual Studio Code - as Code Editor
-* Git / GitHub for Version Control
-* Shields.io for badges used in README.md
+* Trying to deploy ship so part of it is outside of map boundaries:
+![deploying ship out of map boundaries](assets/images/deploying_out_of_map_output_error.png)
 
-[Back to top ⇧](#rpsls)
 
-## Acknowledgements
-* Idea and biggest support to my partner
-* Code Institute for support and knowledge
-* Tutor Marcel for guidance and feedback
-* [W3Schools](https://www.w3schools.com) for information
-* [Google](https://www.google.co.uk) for images, tips and tricks on HTML5 abd CSS
+* Player has to enter 3 values (ship is bigger then one cell), but enters 
+  just 2:
+![not enough values](assets/images/not enough values.png)
 
-[Back to top ⇧](#rpsls)
+
+* Trying to deploy so ships overlap:
+![ships overlapping error](assets/images/ships_overlap_error.png)
+
+
+* Deploying ship on each other:
+![ship delloy on each other output](assets/images/deployng ship on each other.png)
+
+
+* Entering Coordinates that are not in map:
+![entering coordinates out of map](assets/images/entering coordinates out of map.png)
+
+
+* Output of coordinates out of map:
+![coordinates out of map report](assets/images/return if coordinates are not inside of map.png)
+
+
+* After Player completes deploying all ships, CPU will deploy its own and 
+  user will be prompted to do move (shoot) first:
+![player entering coordinates to shoot](assets/images/player shoot.png)
+
+
+* First attempt i have chosen 0,0, then computer made its move:
+![player second attempt](assets/images/player second attemps.png)
+
+
+* If player tries to enter same coordinates, he/she will get returned text:
+![player shooting to same spot](assets/images/shooting to same spot output.png)
+
+* Damaged ships are shown in red squares, till ship is not fully sunk, as we 
+  do not want each part to know what alignment ship it is:
+![ship is sunk](assets/images/ship_sunk.png)
+
+
+#### BATTLESHIP DISPLAY
+* Default Map size is 10 by 10
+* There are 2 maps displayed:
+  * Left - CPU map, where player will be shooting
+  * Right - Players map, showing his/her ships
+* Coordinates are indexed in numbers (this can be changed in game settings)
+
+
+#### SHIPS DISPLAY
+* Every ship has its own color and symbol:
+  * Horizontal ships are marked - Blue
+  * Vertical - Green
+  * If there is any Single cell ships, they will be - Yellow
+* Default symbol on map is ? (question mark), as it marks unknown cell
+* If shot was a Miss - it will be marked with dot in middle
+* Damaged ships will be marked in RED square, they will be revealed later 
+  when fully sunk.
+
+
+#### USER INPUT
+* Be default, user is asked to enter information separated by comma ","
+* Even if player enters different separating symbol, program will try to 
+  predict coordinates
+* Alignment is asked to be one letter:
+  * v- Vertical
+  * h - Horizontal
+* If player enters some mistyping in word, program will try to detect which 
+  alignment it is. Yes it sounds hard, but it is there, not so much refined, 
+  but Levenshtein distance works.
+* Same distance is applied when player is trying to adjust the fleet. If 
+  ship name was entered wrong, it will try to guess, if no luck, player will 
+  be informed.
+* 
+
+### FUTURE FEATURES
+* Implement more complex algorithm for CPU to find ships:
+  * shoot only on odd or even coordinates (like chessboard) - reduces map 
+    size in half - higher chance to find a ship
+  * implement Probability Theory - when one or few ships are sunk, program 
+    could start calculating of possible ship deployments with that map 
+    pattern. Then choose coordinates with highest success rate to Hit
+* Implement mouse - user can be just clicking mouse on screen, instead of typing
+* Implement keyboard cursors - use arrows. 
+
+
+## TESTING
+
+** ** **  Please note this game will not work on mobiles as it runs on the mock terminal. (cred. Mock terminal created by Code Institute). No accessibility or responsive testing was therefore needed. ** ** **
+
+### VALIDATOR TESTING 
+* Python code tested and no significant errors shown. Code passed through:
+
+[**CI PYTHON LINTER**](https://pep8ci.herokuapp.com/https://raw.githubusercontent.com/)
+
+  validated run.py file: 
+![code_validate_run](assets/docs/run.py_validate.png)
+validated hangman.py file:
+![code_validate_hangman](assets/docs/hangman.py_validate.png)
+
+
+
+
+
+### FUNCTIONAL TESTING
+|                               Input                                |            Action            |                                                                 Expected Result                                                                  |     Valid      |
+|:------------------------------------------------------------------:|:----------------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------:|
+| Main page, user is prompted to type Y for Game Settings adjustment |         User types Y         |                                                  Instructions with game Adjustment is displayed                                                  |     Valid      | 
+|               User is prompted to choose adhustments               |         User types F         |                                           Uswer is promted to choose ship to modify or creade new one                                            |Valid|
+|                    User chooses to add new ship                    |         User types N         |                                            User is prompted to enter new ship name, size and quantity                                            |Valid|
+|           To go back iser is prompted to enter 0 - zero            |        User enters 0         |                                                              Previous menu appears                                                               |Valid|
+|               User wants to modify  ship from fleet                |    User eenters ship name    |                                                  User is presenterd with information with ship                                                   |Valid|
+|             User is promted to delete ship from fleet              |        Uswer enters D        |                                                      Computer deletes given ship from fleet                                                      |Valid|
+|                  User wants to adjust given ship                   | User enters size and Quality |                                  Coputer checks if such fleet can fit on map, if True, program creates new ship                                  |Valid|
+|                  User wants to adjust given ship                   |   User Enters wrong values   |                                                            User goes to previous menu                                                            | Valid|
+|              Main Menu, user wants to adjust map size              |        User enters M         |                                                 User is presented with information about new map                                                 |Valid|
+|                User Is changing map to bigger size                 | User enters new Valid values |                                                                 Map size changes                                                                 |Valid|
+|User wants to change map to smaller size|User enters smaller values then current map|                                               Program checks if such map is valid, returns output                                                |Valid|
+|User wants to change map Row and Column Labeling - Indexes|User types I|                                                     New menu and instructtions are presented                                                     |Valid|
+|User is changing indexes from numbers to letters|User types a,a|                                                      New map is generated with new indexes                                                       |Valid|
+|User wants to try entering wrong values for indexes|User enters just one value - a|                                                    User is warned that program need 2 values                                                     |Valid|
+|User wants to change map layout - disable gaps between ships|User enters - G|                                                       User is presented with instructions                                                        |Valid|
+|User wants to disable gaps between ships| User enters - N|                                            new map is generated with ships without gaps between them                                             |Valid|
+|User wants to mess up with prompt| User enters - W| Nothing happens - <program ingoners such thing, user can definately type in Y/Yes/T/True or N/No/F/Faslse | Valid|
+|User just wants to start new game while on main page|User just hits Enter|Game starts|Valid|
+|Ship Deployment| User enters correct Values|Ship is displayed|Valid|
+|User wants to test program and enters bad information|User types not what asked for|User gets warning output|Valid|
+|Main Game - User chooses coordinates to shoot|User enters coordinates 0,0|Game performs shoot action, map and results are displayed|Valid|
+|Main Game - User wants to shoot to same spot again|User again enters coordinates 0,0|User gets arning output|Valid|
+
+
+## TOOLS AND TECHNOLOGIES
+* Python - back end programming
+* Github - used to store code online
+* Heroku - to deploy the app
+* Pycharm - Python coding latform
+
+### VERSION CONTROL
+* Git 
+
+    Code has been pushed with git commands to remote repository on Github with commands:
+   * git add . - to add files ready to commit
+   * git commit -m "message" - to commit the code to local 
+    repository ready to be pushed
+  * git push - final command used to push commited code to remote repo on Github
+   
+### IMPORTS
+* I have imported and used Python packages :
+  * `os` : used to clear the terminal with clear() function
+  * `sys` : used to exit program
+  * `random`: used to randomly select questions from word list
+  * `time`: used for time related functions - timer for logging actions
+  * `re`: handling user input expressions
+
+## DEPLOYMENT
+The app has been displayed thanks to template provided by Code Institue to allow others to test the code.
+
+* The project has been deployed on Heroku as follows:
+     * Use: `pip freeze > requirements.txt` to add external libraries to deployed app.
+     * Create Heroku account ( step by step guide [here](https://coding-boot-camp.github.io/full-stack/heroku/deploy-with-heroku-and-mysql))
+     * In the top right, click 'New'
+     * Click 'Create new app'
+     * Give your app a name and select your region from drop down 
+     * Click 'Create new app' 
+     * Go to 'settings' tab, it's important you do it before deployment
+     * Scroll down to 'config vars' section and key: PORT and value: 8000
+     * Scroll down to 'Buildpacks' section
+     * Click 'Add buildpack'
+     * Add Python as first dependency and select 'Save changes'
+     * Add node.js as a second dependency and save again
+     (This is settings section done)
+     * Select 'Deploy' tab at the top
+     * Select ' Github' from 'Deployment method'
+     * type the name of how you called project in Github and click 'search'
+     * Scroll down and select manual deployment method
+     * Auto method has also been selected to allow the project to update every time i push the code from Gitpod
+     * You can now click to view the app ready and running
+
+
+
+## CLONING THE REPOSITORY
+
+1. On Github navigate to repository
+2. Click "Code" a green button shown right above the file list
+3. Copy the URL of the repo using HTTPS, SSH OR Github CLI
+4. Open Git Bash
+5. Change the current working directory to the location where you want the cloned directory
+6. Type git clone, and then paste the URL you copied earlier
+7. Press enter to create local Clone
+
+For more details on how to clone the remote repo in order to create a local copy for own use, please go to 
+https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository
+
+## FORKING
+1. On Github navigate to repository
+2. click "Fork" located towards the top right corner
+3. Select "owner" for the forked repo, from the dropdown menu under "owner" Under "Owner"
+4. It will create forked repo under the same name as original by default but 
+   you can type a name in "Repository name" or add a description in "Description" box.
+5. Click "Create fork" !
+
+Forking allows you to make any changes without affecting original project. You can send the suggestions over by submitting pull request. Project owner can review the pull request before accepting the suggestions and merging them.
+
+
+For more details on how to fork the repo, in order to for example suggest any changes to the project you can visit: 
+https://docs.github.com/en/get-started/quickstart/fork-a-repo
+
+When you have fork to a repository you don't have access to files locally on your device, for this you will need to clone the forked repo.
+
+
