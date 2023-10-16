@@ -15,7 +15,7 @@ I have implemented few features in this game:
 The aim of this project is to  present my skills on Python that i have 
 acquired on Code Institute "Full Stack Development" course.
 
-[Link to live page](https://tomosius.github.io/Vampyre/)
+[Link to live page](https://battleship-p3-8833f01f29b3.herokuapp.com)
 
 ## Table of contents
 - [VAMPIRES](#vampires)
